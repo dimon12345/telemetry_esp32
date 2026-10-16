@@ -1,6 +1,5 @@
 #pragma once
 
-//#include "esp_err.h"
 #include "onewire_bus.h"
 #include "ds18b20.h"
 
