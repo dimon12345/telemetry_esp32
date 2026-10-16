@@ -1,0 +1,8 @@
+/.settings
+/build
+/managed_components
+/.clangd
+/.cproject
+/.project
+/dependencies.lock
+/sdkconfig.old

@@ -1,0 +1,6 @@
+dependencies:
+  idf:
+    version: '>=4.1.0'
+  espressif/ds18b20: '*'
+  espressif/onewire_bus: '*'
+  espressif/mqtt: '*'
