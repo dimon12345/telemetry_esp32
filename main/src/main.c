@@ -23,7 +23,8 @@ void app_main(void)
         sleep(1);
     }
 
-    ESP_ERROR_CHECK(mqtt_connect());
+    mqtt_handle_t mqtt_handle;
+    ESP_ERROR_CHECK(mqtt_connect(&mqtt_handle));
 
     sensor_handle_t sensor_handle;
     ESP_ERROR_CHECK(init_sensor(&sensor_handle, SENSOR_ONEWIRE_BUS_GPIO));
@@ -32,7 +33,7 @@ void app_main(void)
     float temperature = 0.f;
     while (true) {
         ESP_ERROR_CHECK(read_temperature(&sensor_handle, &temperature));
-        mqtt_send_temperature(temperature);
+        mqtt_send_temperature(&mqtt_handle, temperature);
 
         ESP_LOGI(TAG, "Current temperature: %.2f", temperature);
         sleep(60);
