@@ -32,6 +32,5 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
         ESP_LOGI(TAG, "MQTT publish message error.");
         return ESP_ERR_MQTT_PUBLISH;
     }
-    ESP_LOGI(TAG,"MQTT message id: %d", msg_id);
     return ESP_OK;
 }
