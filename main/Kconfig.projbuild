@@ -5,6 +5,13 @@ menu "Telemetry"
             default 22
             help
                 GPIO pin number with the sensor connected
+
+        config SENSOR_MESSAGE_TIME_INTERVAL
+            int "Send sensor message time interval"
+            default 60
+            help
+                Time interval for sending sensor messages
+
         config SENSOR_ERROR_SLEEP_TIME
             int "Sensor sleep time on read error"
             default 1
@@ -13,7 +20,6 @@ menu "Telemetry"
     endmenu
 
     menu "Wi-Fi Settings"
-
         config ESP_WIFI_SSID
             string "Wi-Fi SSID"
             default "wifi_ap"

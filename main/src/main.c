@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include <unistd.h>
 
 #include <esp_event.h>
 #include <esp_log.h>
@@ -46,20 +45,21 @@ void app_main(void) {
         err = read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "read sensor error");
-            sleep(CONFIG_SENSOR_ERROR_SLEEP_TIME);
+            vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_SENSOR_ERROR_SLEEP_TIME));
             continue;
         }
 
         err = mqtt_send_temperature(&mqtt_handle, temperature);
         if (err == ESP_ERR_MQTT_PUBLISH) {
             ESP_LOGE(TAG, "MQTT publish error.");
-            sleep(CONFIG_ESP_MQTT_LOST_WIFI_SLEEP_TIME);
+            vTaskDelay(pdMS_TO_TICKS(
+                    1000 * CONFIG_ESP_MQTT_LOST_WIFI_SLEEP_TIME));
             continue;
         }
         else {
             ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
         }
 
-        sleep(60);
+        vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_SENSOR_MESSAGE_TIME_INTERVAL));
     }
 }
