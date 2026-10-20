@@ -53,7 +53,7 @@ void app_main(void) {
         err = mqtt_send_temperature(&mqtt_handle, temperature);
         if (err == ESP_ERR_MQTT_PUBLISH) {
             ESP_LOGE(TAG, "MQTT publish error.");
-            sleep(CONFIG_ESP_MQTT_LOST_WIFI_WAIT_TIME);
+            sleep(CONFIG_ESP_MQTT_LOST_WIFI_SLEEP_TIME);
             continue;
         }
         else {

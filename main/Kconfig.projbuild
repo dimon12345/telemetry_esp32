@@ -5,7 +5,7 @@ menu "Telemetry"
         help
             GPIO pin number with the sensor connected
 
-    menu "Wi-Fi Connection Settings"
+    menu "Wi-Fi Settings"
 
         config ESP_WIFI_SSID
             string "Wi-Fi SSID"
@@ -18,10 +18,27 @@ menu "Telemetry"
             default "telemetry"
             help
                 WiFi password (WPA or WPA2) for the Telemetry to use.
+
+        config ESP_WIFI_BAD_PASSWORD_SLEEP_TIME
+            int "Wi-Fi reconnect timeout on bad password"
+            default 60
+            help
+                Wi-Fi reconnect timeout on bad password
+
+        config ESP_WIFI_RECONNECT_SLEEP_TIME
+            int "Default Wi-Fi reconnect timeout in seconds"
+            default 30
+            help
+                Default Wi-Fi reconnect timeout in seconds
+
+        config ESP_WIFI_AP_SCAN_SLEEP_TIME
+            int "Wi-Fi reconnect timeout for scan AP in seconds"
+            default 1
+            help
+                Wi-Fi reconnect timeout for scan AP in seconds
     endmenu
 
-    menu "MQTT Connection Settings"
-
+    menu "MQTT Settings"
         config ESP_MQTT_BROKER_URI
             string "MQTT broker URI"
             default "mqtt://mqtt_broker:1883"
@@ -51,32 +68,11 @@ menu "Telemetry"
             default 1
             help
                 MQTT message QOS
-    endmenu
 
-    menu "Timeouts"
-        config ESP_MQTT_LOST_WIFI_WAIT_TIME
-            int "MQTT lost Wi-Fi wait seconds"
+        config ESP_MQTT_LOST_WIFI_SLEEP_TIME
+            int "MQTT lost Wi-Fi sleep seconds"
             default 10
             help
                 MQTT lost Wi-Fi wait time in seconds before send message again
-
-        config ESP_WIFI_RECONNECT_SLEEP_TIME
-            int "Wi-Fi reconnect timeout on lost AP in seconds"
-            default 30
-            help
-                Wi-Fi reconnect timeout on lost AP in seconds
-
-        config ESP_WIFI_RECONNECT_SLEEP_TIME
-            int "Default Wi-Fi reconnect timeout in seconds"
-            default 30
-            help
-                Default Wi-Fi reconnect timeout in seconds
-
-        config ESP_WIFI_AP_SCAN_SLEEP_TIME
-            int "Wi-Fi reconnect timeout for scan AP in seconds"
-            default 1
-            help
-                Wi-Fi reconnect timeout for scan AP in seconds
-
     endmenu
 endmenu

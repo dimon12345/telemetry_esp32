@@ -26,10 +26,21 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 
         wifi_event_sta_disconnected_t* event =
                 (wifi_event_sta_disconnected_t*)event_data;
-        if (event->reason == WIFI_REASON_NO_AP_FOUND) {
+        switch(event->reason) {
+        case WIFI_REASON_AUTH_FAIL:
+        case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+            ESP_LOGE(TAG, "Wi-Fi password error");
+            sleep(CONFIG_ESP_WIFI_BAD_PASSWORD_SLEEP_TIME);
+            break;
+
+        case WIFI_REASON_NO_AP_FOUND:
+            ESP_LOGE(TAG, "Wi-Fi Access Point not found");
             sleep(CONFIG_ESP_WIFI_AP_SCAN_SLEEP_TIME);
-        } else {
+            break;
+
+        default:
             sleep(CONFIG_ESP_WIFI_RECONNECT_SLEEP_TIME);
+            break;
         }
         esp_wifi_connect();
         break;
@@ -68,6 +79,6 @@ void wifi_connect() {
 
     ESP_LOGI(TAG, "Connecting Wi-Fi ...");
     while(!atomic_load(&wifi_connected_s)) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
