@@ -46,7 +46,7 @@ void app_main(void) {
         err = read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "read sensor error");
-            sleep(1);
+            sleep(CONFIG_SENSOR_ERROR_SLEEP_TIME);
             continue;
         }
 

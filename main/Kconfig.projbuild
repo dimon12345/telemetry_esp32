@@ -1,9 +1,16 @@
 menu "Telemetry"
-    config ESP_SENSOR_GPIO
-        int "Sensor GPIO"
-        default 22
-        help
-            GPIO pin number with the sensor connected
+    menu "Sensor"
+        config ESP_SENSOR_GPIO
+            int "Sensor GPIO"
+            default 22
+            help
+                GPIO pin number with the sensor connected
+        config SENSOR_ERROR_SLEEP_TIME
+            int "Sensor sleep time on read error"
+            default 1
+            help
+                Sensor sleep time on read error
+    endmenu
 
     menu "Wi-Fi Settings"
 
