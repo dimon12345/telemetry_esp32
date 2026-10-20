@@ -9,8 +9,7 @@
 #include "sdkconfig.h"
 
 
-#define TAG "WIFI"
-
+static const char *TAG = "WIFI";
 static _Atomic bool wifi_connected_s = false;
 
 

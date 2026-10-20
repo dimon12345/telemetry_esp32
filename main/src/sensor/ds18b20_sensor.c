@@ -5,8 +5,7 @@
 
 // 1byte ROM command + 8byte ROM number + 1byte device command
 #define DS18B20_SCRATCHPAD_SIZE 10
-
-#define TAG "SENSOR"
+static const char *TAG = "SENSOR";
 
 void init_sensor(sensor_handle_t *handle) {
     onewire_bus_config_t bus_config = {
