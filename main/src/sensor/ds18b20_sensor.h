@@ -9,5 +9,5 @@ typedef struct {
     ds18b20_device_handle_t device;
 } sensor_handle_t;
 
-void init_sensor(sensor_handle_t *handle, int bus_gpio_num);
+void init_sensor(sensor_handle_t *handle);
 esp_err_t read_temperature(sensor_handle_t *handle, float *temperature);

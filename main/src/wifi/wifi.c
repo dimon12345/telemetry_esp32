@@ -10,8 +10,6 @@
 
 
 #define TAG "WIFI"
-#define DISCONECTED_SLEEP_TIME 30
-#define NO_AP_FOUND_SLEEP_TIME 1
 
 static _Atomic bool wifi_connected_s = false;
 
@@ -29,9 +27,9 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         wifi_event_sta_disconnected_t* event =
                 (wifi_event_sta_disconnected_t*)event_data;
         if (event->reason == WIFI_REASON_NO_AP_FOUND) {
-            sleep(NO_AP_FOUND_SLEEP_TIME);
+            sleep(CONFIG_ESP_WIFI_AP_SCAN_SLEEP_TIME);
         } else {
-            sleep(DISCONECTED_SLEEP_TIME);
+            sleep(CONFIG_ESP_WIFI_RECONNECT_SLEEP_TIME);
         }
         esp_wifi_connect();
         break;

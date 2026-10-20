@@ -6,14 +6,12 @@
 #include <esp_netif.h>
 #include <freertos/FreeRTOS.h>
 #include <nvs_flash.h>
+#include <sdkconfig.h>
 
 #include "err.h"
 #include "mqtt/mqtt.h"
 #include "sensor/ds18b20_sensor.h"
 #include "wifi/wifi.h"
-
-#define SENSOR_ONEWIRE_BUS_GPIO 22
-#define NO_WIFI_TRANSPORT_SLEEP_TIME 10
 
 static const char *TAG = "MAIN";
 
@@ -38,7 +36,7 @@ void app_main(void) {
     mqtt_connect(&mqtt_handle);
 
     sensor_handle_t sensor_handle;
-    init_sensor(&sensor_handle, SENSOR_ONEWIRE_BUS_GPIO);
+    init_sensor(&sensor_handle);
 
     ESP_LOGI(TAG, "All ready!");
 
@@ -55,7 +53,7 @@ void app_main(void) {
         err = mqtt_send_temperature(&mqtt_handle, temperature);
         if (err == ESP_ERR_MQTT_PUBLISH) {
             ESP_LOGE(TAG, "MQTT publish error.");
-            sleep(NO_WIFI_TRANSPORT_SLEEP_TIME);
+            sleep(CONFIG_ESP_MQTT_LOST_WIFI_WAIT_TIME);
             continue;
         }
         else {

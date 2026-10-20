@@ -1,15 +1,16 @@
 #include "ds18b20_sensor.h"
 
 #include "esp_check.h"
+#include <sdkconfig.h>
 
 // 1byte ROM command + 8byte ROM number + 1byte device command
 #define DS18B20_SCRATCHPAD_SIZE 10
 
 #define TAG "SENSOR"
 
-void init_sensor(sensor_handle_t *handle, int bus_gpio_num) {
+void init_sensor(sensor_handle_t *handle) {
 
-    onewire_bus_config_t bus_config = {.bus_gpio_num = bus_gpio_num};
+    onewire_bus_config_t bus_config = {.bus_gpio_num = CONFIG_ESP_SENSOR_GPIO};
 
     onewire_bus_rmt_config_t rmt_config = {.max_rx_bytes =
                                                DS18B20_SCRATCHPAD_SIZE};

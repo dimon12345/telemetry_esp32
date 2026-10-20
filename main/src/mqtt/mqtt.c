@@ -8,7 +8,6 @@
 
 #include "err.h"
 
-#define MQTT_QOS 1
 
 static const char *TAG = "MQTT";
 static _Atomic bool mqtt_connected_s = false;
@@ -73,7 +72,7 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
     snprintf(payload, sizeof(payload), "%.2f", temperature);
 
     int msg_id = esp_mqtt_client_publish(handle->client, CONFIG_ESP_MQTT_TOPIC,
-                                         payload, 0, MQTT_QOS, 0);
+                                         payload, 0, CONFIG_ESP_MQTT_QOS, 0);
      if (msg_id < 0) {
         return ESP_ERR_MQTT_PUBLISH;
     }
