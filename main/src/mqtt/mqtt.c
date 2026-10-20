@@ -7,7 +7,7 @@
 
 #include "err.h"
 
-static const char *TAG = "MQTT_PUB";
+static const char *TAG = "MQTT";
 
 void mqtt_init(mqtt_handle_t *handle) {
     esp_mqtt_client_config_t mqtt_cfg = {
