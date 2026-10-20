@@ -1,0 +1,4 @@
+#pragma once
+
+#define ESP_ERR_USER_BASE 0x1000
+#define ESP_ERR_MQTT_PUBLISH (ESP_ERR_USER_BASE + 0x01)
