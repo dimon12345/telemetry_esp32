@@ -1,7 +1,7 @@
 menu "Telemetry"
 config ESP_WIFI_SSID
     string "WiFi SSID"
-    default "telemetry"
+    default "wifi_ap"
     help
     SSID (network name) for the Telemetry to connect to.
 
@@ -13,7 +13,7 @@ config ESP_WIFI_PASSWORD
 
 config ESP_MQTT_BROKER_URI
     string "MQTT broker URI"
-    default "mqtt://192.168.0.163:1883"
+    default "mqtt://mqtt_broker:1883"
 
 config ESP_MQTT_USERNAME
     string "MQTT Username"
