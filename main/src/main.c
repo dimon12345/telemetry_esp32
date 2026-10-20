@@ -16,12 +16,12 @@
 
 static const char *TAG = "MAIN";
 
-void app_main(void)
-{
+void app_main(void) {
     ESP_LOGI(TAG, "Start");
 
     esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
+        err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ESP_ERROR_CHECK(nvs_flash_init());
     } else {
@@ -46,21 +46,19 @@ void app_main(void)
     while (true) {
         err = read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
-            ESP_LOGI(TAG,"read sensor error");
+            ESP_LOGI(TAG, "read sensor error");
             sleep(1);
             continue;
         }
 
         err = mqtt_send_temperature(&mqtt_handle, temperature);
         if (err == ESP_ERR_MQTT_PUBLISH) {
-            ESP_LOGI(TAG,"publish error");
+            ESP_LOGI(TAG, "publish error");
             sleep(1);
             continue;
         }
 
-        ESP_LOGI(TAG,
-                "Temperature sent: %.2f",
-                temperature);
+        ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
 
         sleep(60);
     }
