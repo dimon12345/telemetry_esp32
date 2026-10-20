@@ -31,10 +31,10 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    wifi_init();
+    wifi_connect();
 
     mqtt_handle_t mqtt_handle;
-    mqtt_init(&mqtt_handle);
+    mqtt_connect(&mqtt_handle);
 
     sensor_handle_t sensor_handle;
     init_sensor(&sensor_handle, SENSOR_ONEWIRE_BUS_GPIO);
@@ -53,7 +53,7 @@ void app_main(void) {
 
         err = mqtt_send_temperature(&mqtt_handle, temperature);
         if (err == ESP_ERR_MQTT_PUBLISH) {
-            ESP_LOGI(TAG, "publish error");
+            ESP_LOGE(TAG, "publish error");
             sleep(1);
             continue;
         }
