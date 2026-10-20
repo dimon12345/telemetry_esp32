@@ -52,11 +52,10 @@ void app_main(void) {
         err = mqtt_send_temperature(&mqtt_handle, temperature);
         if (err == ESP_ERR_MQTT_PUBLISH) {
             ESP_LOGE(TAG, "MQTT publish error.");
-            vTaskDelay(pdMS_TO_TICKS(
-                    1000 * CONFIG_ESP_MQTT_LOST_WIFI_SLEEP_TIME));
+            vTaskDelay(
+                pdMS_TO_TICKS(1000 * CONFIG_ESP_MQTT_LOST_WIFI_SLEEP_TIME));
             continue;
-        }
-        else {
+        } else {
             ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
         }
 

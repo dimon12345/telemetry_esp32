@@ -8,12 +8,10 @@
 static const char *TAG = "SENSOR";
 
 void init_sensor(sensor_handle_t *handle) {
-    onewire_bus_config_t bus_config = {
-        .bus_gpio_num = CONFIG_ESP_SENSOR_GPIO,
-        .flags = {
-            .en_pull_up = true,
-        }
-    };
+    onewire_bus_config_t bus_config = {.bus_gpio_num = CONFIG_ESP_SENSOR_GPIO,
+                                       .flags = {
+                                           .en_pull_up = true,
+                                       }};
 
     onewire_bus_rmt_config_t rmt_config = {.max_rx_bytes =
                                                DS18B20_SCRATCHPAD_SIZE};

@@ -8,11 +8,9 @@
 
 #include "sdkconfig.h"
 
-
 #define ATOMIC_LOAD_TIME_INTERVAL 100
 static const char *TAG = "WIFI";
 static _Atomic bool wifi_connected_s = false;
-
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data) {
@@ -24,9 +22,9 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     case WIFI_EVENT_STA_DISCONNECTED:
         atomic_store(&wifi_connected_s, false);
 
-        wifi_event_sta_disconnected_t* event =
-                (wifi_event_sta_disconnected_t*)event_data;
-        switch(event->reason) {
+        wifi_event_sta_disconnected_t *event =
+            (wifi_event_sta_disconnected_t *)event_data;
+        switch (event->reason) {
         case WIFI_REASON_AUTH_FAIL:
         case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
             ESP_LOGE(TAG, "Wi-Fi password error");
@@ -48,8 +46,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
-                               int32_t event_id, void *event_data)
-{
+                                 int32_t event_id, void *event_data) {
     atomic_store(&wifi_connected_s, true);
 }
 
@@ -78,7 +75,7 @@ void wifi_connect() {
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "Connecting Wi-Fi ...");
-    while(!atomic_load(&wifi_connected_s)) {
+    while (!atomic_load(&wifi_connected_s)) {
         vTaskDelay(pdMS_TO_TICKS(ATOMIC_LOAD_TIME_INTERVAL));
     }
 }
