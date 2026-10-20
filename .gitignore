@@ -6,3 +6,4 @@
 /.project
 /dependencies.lock
 /sdkconfig.old
+/sdkconfig
