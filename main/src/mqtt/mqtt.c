@@ -8,6 +8,8 @@
 
 #include "err.h"
 
+#define MQTT_QOS 1
+
 static const char *TAG = "MQTT";
 static _Atomic bool mqtt_connected_s = false;
 
@@ -35,11 +37,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
             atomic_store(&mqtt_connected_s, true);
             ESP_LOGI(TAG, "MQTT connected");
             break;
-
+        case MQTT_EVENT_DISCONNECTED:
+            atomic_store(&mqtt_connected_s, false);
+            break;
         default:
             break;
     }
-
 }
 
 void mqtt_connect(mqtt_handle_t *handle) {
@@ -62,14 +65,18 @@ void mqtt_connect(mqtt_handle_t *handle) {
 }
 
 esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
+    if (!atomic_load(&mqtt_connected_s)) {
+        return ESP_ERR_MQTT_PUBLISH;
+    }
+
     char payload[16];
     snprintf(payload, sizeof(payload), "%.2f", temperature);
 
     int msg_id = esp_mqtt_client_publish(handle->client, CONFIG_ESP_MQTT_TOPIC,
-                                         payload, 0, 1, 0);
-    if (msg_id == -1) {
-        ESP_LOGI(TAG, "MQTT publish message error.");
+                                         payload, 0, MQTT_QOS, 0);
+     if (msg_id < 0) {
         return ESP_ERR_MQTT_PUBLISH;
     }
+
     return ESP_OK;
 }

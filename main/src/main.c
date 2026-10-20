@@ -13,6 +13,7 @@
 #include "wifi/wifi.h"
 
 #define SENSOR_ONEWIRE_BUS_GPIO 22
+#define NO_WIFI_TRANSPORT_SLEEP_TIME 10
 
 static const char *TAG = "MAIN";
 
@@ -46,19 +47,20 @@ void app_main(void) {
     while (true) {
         err = read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
-            ESP_LOGI(TAG, "read sensor error");
+            ESP_LOGE(TAG, "read sensor error");
             sleep(1);
             continue;
         }
 
         err = mqtt_send_temperature(&mqtt_handle, temperature);
         if (err == ESP_ERR_MQTT_PUBLISH) {
-            ESP_LOGE(TAG, "publish error");
-            sleep(1);
+            ESP_LOGE(TAG, "MQTT publish error.");
+            sleep(NO_WIFI_TRANSPORT_SLEEP_TIME);
             continue;
         }
-
-        ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
+        else {
+            ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
+        }
 
         sleep(60);
     }
