@@ -9,6 +9,7 @@
 #include "sdkconfig.h"
 
 
+#define ATOMIC_LOAD_TIME_INTERVAL 100
 static const char *TAG = "WIFI";
 static _Atomic bool wifi_connected_s = false;
 
@@ -78,6 +79,6 @@ void wifi_connect() {
 
     ESP_LOGI(TAG, "Connecting Wi-Fi ...");
     while(!atomic_load(&wifi_connected_s)) {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(ATOMIC_LOAD_TIME_INTERVAL));
     }
 }

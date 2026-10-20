@@ -8,7 +8,7 @@
 
 #include "err.h"
 
-
+#define ATOMIC_LOAD_TIME_INTERVAL 100
 static const char *TAG = "MQTT";
 static _Atomic bool mqtt_connected_s = false;
 
@@ -59,7 +59,7 @@ void mqtt_connect(mqtt_handle_t *handle) {
 
     ESP_LOGI(TAG, "Connecting MQTT ...");
     while(!atomic_load(&mqtt_connected_s)) {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(ATOMIC_LOAD_TIME_INTERVAL));
     }
 }
 
