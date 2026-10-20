@@ -4,6 +4,5 @@
 /.clangd
 /.cproject
 /.project
-/dependencies.lock
 /sdkconfig.old
 /sdkconfig
