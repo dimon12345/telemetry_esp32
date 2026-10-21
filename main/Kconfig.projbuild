@@ -3,18 +3,21 @@ menu "Telemetry"
         config ESP_SENSOR_GPIO
             int "Sensor GPIO"
             default 22
+            range 0 48
             help
                 GPIO pin number with the sensor connected
 
         config SENSOR_MESSAGE_TIME_INTERVAL
             int "Send sensor message time interval"
             default 60
+            range 1 86400
             help
                 Time interval for sending sensor messages
 
         config SENSOR_ERROR_SLEEP_TIME
             int "Sensor sleep time on read error"
             default 1
+            range 1 86400
             help
                 Sensor sleep time on read error
     endmenu
@@ -35,18 +38,21 @@ menu "Telemetry"
         config ESP_WIFI_BAD_PASSWORD_SLEEP_TIME
             int "Wi-Fi reconnect timeout on bad password"
             default 60
+            range 1 86400
             help
                 Wi-Fi reconnect timeout on bad password
 
         config ESP_WIFI_RECONNECT_SLEEP_TIME
             int "Default Wi-Fi reconnect timeout in seconds"
             default 30
+            range 1 86400
             help
                 Default Wi-Fi reconnect timeout in seconds
 
         config ESP_WIFI_AP_SCAN_SLEEP_TIME
             int "Wi-Fi reconnect timeout for scan AP in seconds"
             default 1
+            range 1 86400
             help
                 Wi-Fi reconnect timeout for scan AP in seconds
     endmenu
@@ -79,12 +85,14 @@ menu "Telemetry"
         config ESP_MQTT_QOS
             int "MQTT message QOS"
             default 1
+            range 0 2
             help
                 MQTT message QOS
 
         config ESP_MQTT_LOST_WIFI_SLEEP_TIME
             int "MQTT lost Wi-Fi sleep seconds"
             default 10
+            range 1 86400
             help
                 MQTT lost Wi-Fi wait time in seconds before send message again
     endmenu
