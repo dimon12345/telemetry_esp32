@@ -7,7 +7,6 @@
 #include <nvs_flash.h>
 #include <sdkconfig.h>
 
-#include "err.h"
 #include "mqtt/mqtt.h"
 #include "sensor/ds18b20_sensor.h"
 #include "wifi/wifi.h"
@@ -32,7 +31,7 @@ void app_main(void) {
     wifi_connect();
 
     mqtt_handle_t mqtt_handle;
-    mqtt_connect(&mqtt_handle);
+    ESP_ERROR_CHECK(mqtt_connect(&mqtt_handle));
 
     sensor_handle_t sensor_handle;
     init_sensor(&sensor_handle);
@@ -50,13 +49,13 @@ void app_main(void) {
         }
 
         err = mqtt_send_temperature(&mqtt_handle, temperature);
-        if (err == ESP_ERR_MQTT_PUBLISH) {
+        if (err == ESP_OK) {
+            ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
+        } else {
             ESP_LOGE(TAG, "MQTT publish error.");
             vTaskDelay(
                 pdMS_TO_TICKS(1000 * CONFIG_ESP_MQTT_LOST_WIFI_SLEEP_TIME));
             continue;
-        } else {
-            ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
         }
 
         vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_SENSOR_MESSAGE_TIME_INTERVAL));

@@ -6,8 +6,6 @@
 #include <esp_log.h>
 #include <sdkconfig.h>
 
-#include "err.h"
-
 #define ATOMIC_LOAD_TIME_INTERVAL 100
 static const char *TAG = "MQTT";
 static _Atomic bool mqtt_connected_s = false;
@@ -45,28 +43,34 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
     }
 }
 
-void mqtt_connect(mqtt_handle_t *handle) {
+esp_err_t mqtt_connect(mqtt_handle_t *handle) {
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = CONFIG_ESP_MQTT_BROKER_URI,
         .credentials = {.username = CONFIG_ESP_MQTT_USERNAME,
                         .authentication.password = CONFIG_ESP_MQTT_PASSWORD}};
 
-    handle->client = esp_mqtt_client_init(&mqtt_cfg);
+    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Can't init MQTT client");
+        return ESP_FAIL;
+    }
+    handle->client = client;
 
-    esp_mqtt_client_register_event(handle->client, ESP_EVENT_ANY_ID,
-                                   mqtt_event_handler, NULL);
+    ESP_ERROR_CHECK(esp_mqtt_client_register_event(handle->client, ESP_EVENT_ANY_ID,
+                                   mqtt_event_handler, NULL));
 
-    esp_mqtt_client_start(handle->client);
+    ESP_ERROR_CHECK(esp_mqtt_client_start(handle->client));
 
     ESP_LOGI(TAG, "Connecting MQTT ...");
     while (!atomic_load(&mqtt_connected_s)) {
         vTaskDelay(pdMS_TO_TICKS(ATOMIC_LOAD_TIME_INTERVAL));
     }
+    return ESP_OK;
 }
 
 esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
     if (!atomic_load(&mqtt_connected_s)) {
-        return ESP_ERR_MQTT_PUBLISH;
+        return ESP_FAIL;
     }
 
     char payload[16];
@@ -75,7 +79,7 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
     int msg_id = esp_mqtt_client_publish(handle->client, CONFIG_ESP_MQTT_TOPIC,
                                          payload, 0, CONFIG_ESP_MQTT_QOS, 0);
     if (msg_id < 0) {
-        return ESP_ERR_MQTT_PUBLISH;
+        return ESP_FAIL;
     }
 
     return ESP_OK;
