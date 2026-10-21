@@ -15,7 +15,7 @@ void app_main(void) {
     ESP_LOGI(TAG, "Start");
 
     sensor_handle_t sensor_handle;
-    init_sensor(&sensor_handle);
+    sensor_init(&sensor_handle);
 
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
@@ -40,7 +40,7 @@ void app_main(void) {
     float temperature = 0.f;
 
     for (;;) {
-        err = read_temperature(&sensor_handle, &temperature);
+        err = sensor_read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "read sensor error");
             vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_SENSOR_ERROR_SLEEP_TIME));

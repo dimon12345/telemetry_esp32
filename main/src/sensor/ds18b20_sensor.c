@@ -7,7 +7,7 @@
 #define DS18B20_SCRATCHPAD_SIZE 10
 static const char *TAG = "SENSOR";
 
-void init_sensor(sensor_handle_t *handle) {
+void sensor_init(sensor_handle_t *handle) {
     onewire_bus_config_t bus_config = {.bus_gpio_num = CONFIG_ESP_SENSOR_GPIO,
                                        .flags = {
                                            .en_pull_up = true,
@@ -29,7 +29,7 @@ void init_sensor(sensor_handle_t *handle) {
     ESP_ERROR_CHECK(onewire_del_device_iter(iter));
 }
 
-esp_err_t read_temperature(sensor_handle_t *handle, float *temperature) {
+esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
     ESP_RETURN_ON_ERROR(
         ds18b20_trigger_temperature_conversion_for_all(handle->bus), TAG,
         "Trigger temperature conversion error");
