@@ -1,11 +1,9 @@
-#include <stdbool.h>
-
 #include <esp_event.h>
 #include <esp_log.h>
 #include <esp_netif.h>
-#include <freertos/FreeRTOS.h>
+#include <esp_wifi.h>
+#include <freertos/idf_additions.h>
 #include <nvs_flash.h>
-#include <sdkconfig.h>
 
 #include "mqtt/mqtt.h"
 #include "sensor/ds18b20_sensor.h"
@@ -31,6 +29,7 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+    esp_netif_create_default_wifi_sta();
     wifi_connect();
 
     mqtt_handle_t mqtt_handle;
@@ -40,7 +39,7 @@ void app_main(void) {
 
     float temperature = 0.f;
 
-    while (true) {
+    for (;;) {
         err = read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "read sensor error");

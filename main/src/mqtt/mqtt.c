@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include <esp_log.h>
-#include <sdkconfig.h>
+#include <freertos/idf_additions.h>
 
 #define ATOMIC_LOAD_TIME_INTERVAL 100
 static const char *TAG = "MQTT";

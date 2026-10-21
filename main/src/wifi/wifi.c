@@ -1,14 +1,13 @@
 #include "wifi.h"
+#include "sdkconfig.h"
 
 #include <stdatomic.h>
 #include <stddef.h>
-#include <unistd.h>
 
 #include <esp_log.h>
 #include <esp_wifi.h>
 #include <esp_timer.h>
-
-#include "sdkconfig.h"
+#include <freertos/idf_additions.h>
 
 #define ATOMIC_LOAD_TIME_INTERVAL 100
 static const char *TAG = "WIFI";
@@ -81,7 +80,6 @@ void init_wifi_timer(void)
 
 void wifi_connect() {
     init_wifi_timer();
-    esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&init_config));
