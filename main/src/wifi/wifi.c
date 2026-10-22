@@ -7,6 +7,8 @@
 #include <esp_log.h>
 #include <freertos/idf_additions.h>
 
+#include "event_group_bits.h"
+
 #define ATOMIC_LOAD_TIME_INTERVAL 100
 static const char *TAG = "WIFI";
 
@@ -33,7 +35,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         break;
 
     case WIFI_EVENT_STA_DISCONNECTED:
-        atomic_store(&handle->wifi_connected, false);
+        xEventGroupClearBits(handle->event_group, WIFI_CONNECTED_BIT);
         atomic_fetch_add(&handle->wifi_disconnect_count, 1);
         if (atomic_load(&handle->wifi_disconnect_count) >=
                 CONFIG_ESP_WIFI_DISCONNECT_THRESHOLD) {
@@ -71,7 +73,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
                                  int32_t event_id, void *event_data) {
     wifi_handle_t *handle = (wifi_handle_t *)arg;
-    atomic_store(&handle->wifi_connected, true);
+    xEventGroupSetBits(handle->event_group, WIFI_CONNECTED_BIT);
     atomic_store(&handle->wifi_disconnect_count, 0);
 }
 
@@ -85,7 +87,7 @@ void init_wifi_timer(wifi_handle_t *handle)
     ESP_ERROR_CHECK(esp_timer_create(&once_timer_args, &handle->connect_timer));
 }
 
-esp_err_t wifi_connect(wifi_handle_t *handle) {
+esp_err_t wifi_init(wifi_handle_t *handle) {
     init_wifi_timer(handle);
 
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
@@ -110,9 +112,5 @@ esp_err_t wifi_connect(wifi_handle_t *handle) {
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "Connecting Wi-Fi ...");
-    while (!atomic_load(&handle->wifi_connected)) {
-        vTaskDelay(pdMS_TO_TICKS(ATOMIC_LOAD_TIME_INTERVAL));
-    }
-
     return ESP_OK;
 }

@@ -6,13 +6,39 @@
 #include <esp_log.h>
 #include <freertos/idf_additions.h>
 
-#define ATOMIC_LOAD_TIME_INTERVAL 100
-static const char *TAG = "MQTT";
-static _Atomic bool mqtt_connected_s = false;
+#include "event_group_bits.h"
 
-static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
-                               int32_t event_id, void *event_data) {
+static const char *TAG = "MQTT";
+
+static void mqtt_control_task(void *arg) {
+    bool mqtt_started = false;
+    mqtt_handle_t *handle = (mqtt_handle_t *)arg;
+
+    for (;;) {
+        EventBits_t bits = xEventGroupGetBits(handle->event_group);
+        if (bits & WIFI_CONNECTED_BIT) {
+            if (!mqtt_started) {
+                esp_mqtt_client_start(handle->client);
+                mqtt_started = true;
+            }
+            vTaskDelay(
+                    pdMS_TO_TICKS(1000 * CONFIG_ESP_MQTT_LOST_WIFI_SLEEP_TIME));
+        } else {
+            if (mqtt_started) {
+                esp_mqtt_client_stop(handle->client);
+                mqtt_started = false;
+            }
+
+            xEventGroupWaitBits(handle->event_group, WIFI_CONNECTED_BIT,
+                    pdFALSE, pdTRUE, portMAX_DELAY);
+        }
+    }
+}
+
+static void mqtt_event_handler(
+        void *arg, esp_event_base_t base, int32_t event_id, void *event_data) {
     esp_mqtt_event_handle_t event = event_data;
+    mqtt_handle_t *handle = (mqtt_handle_t *)arg;
 
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_ERROR:
@@ -32,18 +58,18 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
         break;
 
     case MQTT_EVENT_CONNECTED:
-        atomic_store(&mqtt_connected_s, true);
+        xEventGroupSetBits(handle->event_group, MQTT_CONNECTED_BIT);
         ESP_LOGI(TAG, "MQTT connected");
         break;
     case MQTT_EVENT_DISCONNECTED:
-        atomic_store(&mqtt_connected_s, false);
+        xEventGroupClearBits(handle->event_group, MQTT_CONNECTED_BIT);
         break;
     default:
         break;
     }
 }
 
-esp_err_t mqtt_connect(mqtt_handle_t *handle) {
+esp_err_t mqtt_init(mqtt_handle_t *handle) {
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = CONFIG_ESP_MQTT_BROKER_URI,
         .credentials = {.username = CONFIG_ESP_MQTT_USERNAME,
@@ -59,17 +85,19 @@ esp_err_t mqtt_connect(mqtt_handle_t *handle) {
     ESP_ERROR_CHECK(esp_mqtt_client_register_event(handle->client, ESP_EVENT_ANY_ID,
                                    mqtt_event_handler, NULL));
 
-    ESP_ERROR_CHECK(esp_mqtt_client_start(handle->client));
-
-    ESP_LOGI(TAG, "Connecting MQTT ...");
-    while (!atomic_load(&mqtt_connected_s)) {
-        vTaskDelay(pdMS_TO_TICKS(ATOMIC_LOAD_TIME_INTERVAL));
+    BaseType_t result =
+            xTaskCreate(mqtt_control_task, "mqtt_ctrl", 3072, handle, 3, NULL);
+    if (result != pdPASS) {
+        ESP_LOGE(TAG, "Can't create task. (result: %d)", result);
+        return ESP_FAIL;
     }
+
     return ESP_OK;
 }
 
 esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
-    if (!atomic_load(&mqtt_connected_s)) {
+    EventBits_t bits = xEventGroupGetBits(handle->event_group);
+    if ((bits & MQTT_CONNECTED_BIT) == 0) {
         return ESP_FAIL;
     }
 

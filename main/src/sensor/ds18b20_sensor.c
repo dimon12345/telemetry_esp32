@@ -3,6 +3,8 @@
 #include "esp_check.h"
 #include <sdkconfig.h>
 
+#include "event_group_bits.h"
+
 // 1byte ROM command + 8byte ROM number + 1byte device command
 #define DS18B20_SCRATCHPAD_SIZE 10
 static const char *TAG = "SENSOR";
@@ -27,9 +29,15 @@ void sensor_init(sensor_handle_t *handle) {
     ESP_ERROR_CHECK(ds18b20_new_device_from_enumeration(
         &next_onewire_device, &ds_cfg, &handle->device));
     ESP_ERROR_CHECK(onewire_del_device_iter(iter));
+    xEventGroupSetBits(handle->event_group, SENSOR_READY_BIT);
 }
 
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
+    EventBits_t bits = xEventGroupGetBits(handle->event_group);
+    if ((bits & SENSOR_READY_BIT) == 0) {
+        return ESP_FAIL;
+    }
+
     ESP_RETURN_ON_ERROR(
         ds18b20_trigger_temperature_conversion_for_all(handle->bus), TAG,
         "Trigger temperature conversion error");

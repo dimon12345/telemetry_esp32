@@ -96,7 +96,7 @@ menu "Telemetry"
 
         config ESP_MQTT_LOST_WIFI_SLEEP_TIME
             int "MQTT lost Wi-Fi sleep seconds"
-            default 10
+            default 1
             range 1 86400
             help
                 MQTT lost Wi-Fi wait time in seconds before send message again

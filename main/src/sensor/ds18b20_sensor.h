@@ -1,12 +1,17 @@
 #pragma once
 
-#include <ds18b20.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+
 #include <esp_err.h>
 #include <onewire_bus.h>
+
+#include <ds18b20.h>
 
 typedef struct {
     onewire_bus_handle_t bus;
     ds18b20_device_handle_t device;
+    EventGroupHandle_t event_group;
 } sensor_handle_t;
 
 void sensor_init(sensor_handle_t *handle);
