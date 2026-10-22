@@ -10,31 +10,6 @@
 
 static const char *TAG = "MQTT";
 
-static void mqtt_control_task(void *arg) {
-    bool mqtt_started = false;
-    mqtt_handle_t *handle = (mqtt_handle_t *)arg;
-
-    for (;;) {
-        EventBits_t bits = xEventGroupGetBits(handle->event_group);
-        if (bits & WIFI_CONNECTED_BIT) {
-            if (!mqtt_started) {
-                esp_mqtt_client_start(handle->client);
-                mqtt_started = true;
-            }
-            vTaskDelay(
-                    pdMS_TO_TICKS(1000 * CONFIG_ESP_MQTT_LOST_WIFI_SLEEP_TIME));
-        } else {
-            if (mqtt_started) {
-                esp_mqtt_client_stop(handle->client);
-                mqtt_started = false;
-            }
-
-            xEventGroupWaitBits(handle->event_group, WIFI_CONNECTED_BIT,
-                    pdFALSE, pdTRUE, portMAX_DELAY);
-        }
-    }
-}
-
 static void mqtt_event_handler(
         void *arg, esp_event_base_t base, int32_t event_id, void *event_data) {
     esp_mqtt_event_handle_t event = event_data;
@@ -85,12 +60,7 @@ esp_err_t mqtt_init(mqtt_handle_t *handle) {
     ESP_ERROR_CHECK(esp_mqtt_client_register_event(
             handle->client, ESP_EVENT_ANY_ID, mqtt_event_handler, handle));
 
-    BaseType_t result =
-            xTaskCreate(mqtt_control_task, "mqtt_ctrl", 3072, handle, 3, NULL);
-    if (result != pdPASS) {
-        ESP_LOGE(TAG, "Can't create task. (result: %d)", result);
-        return ESP_FAIL;
-    }
+    ESP_ERROR_CHECK(esp_mqtt_client_start(handle->client));
 
     return ESP_OK;
 }
