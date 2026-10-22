@@ -6,7 +6,9 @@
 #include <nvs_flash.h>
 
 #include "event_group_bits.h"
+#include "freertos/projdefs.h"
 #include "mqtt/mqtt.h"
+#include "portmacro.h"
 #include "sensor/ds18b20_sensor.h"
 #include "wifi/wifi.h"
 
@@ -51,12 +53,8 @@ void app_main(void) {
     float temperature = 0.f;
 
     for (;;) {
-        EventBits_t bits = xEventGroupGetBits(event_group);
-        if ((bits & MQTT_CONNECTED_BIT) == 0 ||
-                (bits & SENSOR_READY_BIT) == 0) {
-            vTaskDelay(
-                    pdMS_TO_TICKS(1000 * CHECK_EVENT_GROUP_BIT_TIME_INTERVAL));
-        }
+        xEventGroupWaitBits(event_group, MQTT_CONNECTED_BIT | SENSOR_READY_BIT,
+            pdFALSE, pdTRUE, portMAX_DELAY);
 
         err = sensor_read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
