@@ -43,16 +43,16 @@ static void mqtt_event_handler(
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_ERROR:
         if (event->error_handle->error_type ==
-            MQTT_ERROR_TYPE_CONNECTION_REFUSED) {
+                MQTT_ERROR_TYPE_CONNECTION_REFUSED) {
 
             esp_mqtt_connect_return_code_t return_code =
-                event->error_handle->connect_return_code;
+                    event->error_handle->connect_return_code;
             if (return_code == MQTT_CONNECTION_REFUSE_BAD_USERNAME ||
-                return_code == MQTT_CONNECTION_REFUSE_NOT_AUTHORIZED) {
+                    return_code == MQTT_CONNECTION_REFUSE_NOT_AUTHORIZED) {
                 ESP_LOGE(TAG,
-                         "Authorization error: Bad user or password "
-                         "(Return code: %d)",
-                         return_code);
+                        "Authorization error: Bad user or password "
+                        "(Return code: %d)",
+                        return_code);
             }
         }
         break;
@@ -71,9 +71,9 @@ static void mqtt_event_handler(
 
 esp_err_t mqtt_init(mqtt_handle_t *handle) {
     esp_mqtt_client_config_t mqtt_cfg = {
-        .broker.address.uri = CONFIG_ESP_MQTT_BROKER_URI,
-        .credentials = {.username = CONFIG_ESP_MQTT_USERNAME,
-                        .authentication.password = CONFIG_ESP_MQTT_PASSWORD}};
+            .broker.address.uri = CONFIG_ESP_MQTT_BROKER_URI,
+            .credentials = {.username = CONFIG_ESP_MQTT_USERNAME,
+                    .authentication.password = CONFIG_ESP_MQTT_PASSWORD}};
 
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
     if (client == NULL) {
@@ -82,8 +82,8 @@ esp_err_t mqtt_init(mqtt_handle_t *handle) {
     }
     handle->client = client;
 
-    ESP_ERROR_CHECK(esp_mqtt_client_register_event(handle->client, ESP_EVENT_ANY_ID,
-                                   mqtt_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_mqtt_client_register_event(
+            handle->client, ESP_EVENT_ANY_ID, mqtt_event_handler, handle));
 
     BaseType_t result =
             xTaskCreate(mqtt_control_task, "mqtt_ctrl", 3072, handle, 3, NULL);
@@ -105,7 +105,7 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
     snprintf(payload, sizeof(payload), "%.2f", temperature);
 
     int msg_id = esp_mqtt_client_publish(handle->client, CONFIG_ESP_MQTT_TOPIC,
-                                         payload, 0, CONFIG_ESP_MQTT_QOS, 0);
+            payload, 0, CONFIG_ESP_MQTT_QOS, 0);
     if (msg_id < 0) {
         return ESP_FAIL;
     }

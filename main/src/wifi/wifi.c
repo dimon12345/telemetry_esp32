@@ -12,10 +12,7 @@
 #define ATOMIC_LOAD_TIME_INTERVAL 100
 static const char *TAG = "WIFI";
 
-static void timer_wifi_connect(void* arg)
-{
-    esp_wifi_connect();
-}
+static void timer_wifi_connect(void *arg) { esp_wifi_connect(); }
 
 static void request_wifi_connect(wifi_handle_t *handle, int sleep_seconds) {
     uint64_t delay_us = (uint64_t)sleep_seconds * 1000 * 1000;
@@ -27,7 +24,7 @@ static void request_wifi_connect(wifi_handle_t *handle, int sleep_seconds) {
 }
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
-                               int32_t event_id, void *event_data) {
+        int32_t event_id, void *event_data) {
     wifi_handle_t *handle = (wifi_handle_t *)arg;
     switch (event_id) {
     case WIFI_EVENT_STA_START:
@@ -43,27 +40,25 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
             esp_restart();
         }
 
-
         wifi_event_sta_disconnected_t *event =
-            (wifi_event_sta_disconnected_t *)event_data;
+                (wifi_event_sta_disconnected_t *)event_data;
         switch (event->reason) {
         case WIFI_REASON_AUTH_FAIL:
         case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
             ESP_LOGE(TAG, "Wi-Fi password error");
-            request_wifi_connect(handle,
-                    CONFIG_ESP_WIFI_BAD_PASSWORD_SLEEP_TIME);
+            request_wifi_connect(
+                    handle, CONFIG_ESP_WIFI_BAD_PASSWORD_SLEEP_TIME);
             break;
 
         case WIFI_REASON_NO_AP_FOUND:
-            ESP_LOGE(TAG, "Wi-Fi Access Point not found %d", handle->wifi_disconnect_count);
-            request_wifi_connect(handle,
-                    CONFIG_ESP_WIFI_AP_SCAN_SLEEP_TIME);
+            ESP_LOGE(TAG, "Wi-Fi Access Point not found %d",
+                    handle->wifi_disconnect_count);
+            request_wifi_connect(handle, CONFIG_ESP_WIFI_AP_SCAN_SLEEP_TIME);
             break;
 
         default:
             ESP_LOGE(TAG, "Wi-Fi disconnected with reason %d", event->reason);
-            request_wifi_connect(handle,
-                    CONFIG_ESP_WIFI_RECONNECT_SLEEP_TIME);
+            request_wifi_connect(handle, CONFIG_ESP_WIFI_RECONNECT_SLEEP_TIME);
             break;
         }
         break;
@@ -71,18 +66,15 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
-                                 int32_t event_id, void *event_data) {
+        int32_t event_id, void *event_data) {
     wifi_handle_t *handle = (wifi_handle_t *)arg;
     xEventGroupSetBits(handle->event_group, WIFI_CONNECTED_BIT);
     atomic_store(&handle->wifi_disconnect_count, 0);
 }
 
-void init_wifi_timer(wifi_handle_t *handle)
-{
+void init_wifi_timer(wifi_handle_t *handle) {
     const esp_timer_create_args_t once_timer_args = {
-        .callback = &timer_wifi_connect,
-        .arg = handle
-    };
+            .callback = &timer_wifi_connect, .arg = handle};
 
     ESP_ERROR_CHECK(esp_timer_create(&once_timer_args, &handle->connect_timer));
 }
@@ -94,17 +86,14 @@ esp_err_t wifi_init(wifi_handle_t *handle) {
     ESP_ERROR_CHECK(esp_wifi_init(&init_config));
 
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
-        WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, handle, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(
-        IP_EVENT, IP_EVENT_STA_GOT_IP, &got_ip_event_handler, handle, NULL));
+            WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, handle, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
+            IP_EVENT_STA_GOT_IP, &got_ip_event_handler, handle, NULL));
 
     wifi_config_t wifi_config = {
-        .sta =
-            {
-                .ssid = CONFIG_ESP_WIFI_SSID,
-                .password = CONFIG_ESP_WIFI_PASSWORD,
-                .threshold.authmode = WIFI_AUTH_WPA2_PSK
-            },
+            .sta = {.ssid = CONFIG_ESP_WIFI_SSID,
+                    .password = CONFIG_ESP_WIFI_PASSWORD,
+                    .threshold.authmode = WIFI_AUTH_WPA2_PSK},
     };
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
