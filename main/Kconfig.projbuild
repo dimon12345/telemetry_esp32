@@ -35,6 +35,11 @@ menu "Telemetry"
             help
                 WiFi password (WPA or WPA2) for the Telemetry to use.
 
+        config ESP_WIFI_DISCONNECT_THRESHOLD
+            int "Disconnect threshold"
+            default 10
+            range 1 1000
+
         config ESP_WIFI_BAD_PASSWORD_SLEEP_TIME
             int "Wi-Fi reconnect timeout on bad password"
             default 60

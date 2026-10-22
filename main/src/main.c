@@ -30,9 +30,11 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     esp_netif_create_default_wifi_sta();
-    wifi_connect();
 
-    mqtt_handle_t mqtt_handle;
+    wifi_handle_t wifi_handle = {false, 0, NULL};
+    ESP_ERROR_CHECK(wifi_connect(&wifi_handle));
+
+    mqtt_handle_t mqtt_handle = {NULL};
     ESP_ERROR_CHECK(mqtt_connect(&mqtt_handle));
 
     ESP_LOGI(TAG, "All ready!");
