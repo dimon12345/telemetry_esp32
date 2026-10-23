@@ -67,5 +67,5 @@ esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
         handle->sensor_ready = false;
     }
 
-    return ESP_OK;
+    return err;
 }
