@@ -71,8 +71,12 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
         return ESP_FAIL;
     }
 
-    char payload[16];
-    snprintf(payload, sizeof(payload), "%.2f", temperature);
+    char payload[64];
+    int len = snprintf(payload, sizeof(payload), "{\"temperature\":%.2f}", (double)temperature);
+    if (len < 0) {
+        return ESP_FAIL;
+    }
+    ESP_LOGW(TAG, "payload: %s", payload);
 
     int msg_id = esp_mqtt_client_publish(handle->client, CONFIG_ESP_MQTT_TOPIC,
             payload, 0, CONFIG_ESP_MQTT_QOS, 0);
