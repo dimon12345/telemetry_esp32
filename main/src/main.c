@@ -37,18 +37,23 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    EventGroupHandle_t event_group = xEventGroupCreate();
-    if (event_group == NULL) {
-        ESP_LOGE(TAG, "No memory. Restart ...");
-        esp_restart();
-    }
+    ESP_LOGI(TAG, "app_main #1");
 
     // Sensor
-    sensor_handle_t sensor_handle = {.event_group = event_group};
+    sensor_handle_t sensor_handle = {0};
     err = sensor_init(&sensor_handle);
     if (err != ESP_OK) {
         ESP_LOGE(
                 TAG, "Sensor init error: %s (0x%X)", esp_err_to_name(err), err);
+    }
+
+    ESP_LOGI(TAG, "app_main #2");
+
+    // Event group
+    EventGroupHandle_t event_group = xEventGroupCreate();
+    if (event_group == NULL) {
+        ESP_LOGE(TAG, "No memory. Restart ...");
+        esp_restart();
     }
 
     // Wi-Fi

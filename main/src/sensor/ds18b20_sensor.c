@@ -19,10 +19,13 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
     ds18b20_config_t ds_cfg = {};
     onewire_device_t next_onewire_device;
 
-    if (handle->bus == NULL) {
+    if (!handle->bus) {
+        ESP_LOGE(TAG, "create bus");
         ESP_RETURN_ON_ERROR(
                 onewire_new_bus_rmt(&bus_config, &rmt_config, &handle->bus),
                 TAG, "New bus RMT error");
+    } else {
+        ESP_LOGE(TAG, "bus already exists");
     }
 
     ESP_RETURN_ON_ERROR(onewire_new_device_iter(handle->bus, &iter), TAG,
@@ -42,13 +45,12 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
     ESP_RETURN_ON_ERROR(
             onewire_del_device_iter(iter), TAG, "Delete device iterator error");
 
-    xEventGroupSetBits(handle->event_group, SENSOR_READY_BIT);
+    atomic_store(&handle->sensor_ready, true);
     return ESP_OK;
 }
 
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
-    EventBits_t bits = xEventGroupGetBits(handle->event_group);
-    if ((bits & SENSOR_READY_BIT) == 0) {
+    if (!atomic_load(&handle->sensor_ready)) {
         ESP_RETURN_ON_ERROR(sensor_init(handle), TAG, "Sensor init error");
     }
 

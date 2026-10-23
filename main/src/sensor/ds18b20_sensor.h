@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdatomic.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 
@@ -11,7 +13,7 @@
 typedef struct {
     onewire_bus_handle_t bus;
     ds18b20_device_handle_t device;
-    EventGroupHandle_t event_group;
+    atomic_bool sensor_ready;
 } sensor_handle_t;
 
 esp_err_t sensor_init(sensor_handle_t *handle);
