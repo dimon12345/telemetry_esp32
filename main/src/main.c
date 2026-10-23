@@ -47,22 +47,12 @@ void app_main(void) {
     esp_netif_create_default_wifi_sta();
 
     wifi_handle_t wifi_handle = {.event_group = event_group};
-    int init_try = 0;
-    for (; init_try < WIFI_ERROR_INIT_THRASHOLD; ++init_try) {
-        if (wifi_init(&wifi_handle) == ESP_OK) {
-            break;
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000 * WIFI_ERROR_INIT_SLEEP_TIME));
-    }
-    if (init_try >= WIFI_ERROR_INIT_THRASHOLD) {
-        ESP_LOGE(TAG, "Wi-Fi init error thrashold exceeded. Restart ...");
-        esp_restart();
-    }
+    ESP_ERROR_CHECK(wifi_init(&wifi_handle));
 
     // Sensor
     sensor_handle_t sensor_handle = {.event_group = event_group};
 
-    init_try = 0;
+    int init_try = 0;
     for (; init_try < SENSOR_ERROR_INIT_THRASHOLD; ++init_try) {
         if (sensor_init(&sensor_handle) == ESP_OK) {
             break;
