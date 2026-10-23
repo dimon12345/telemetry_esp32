@@ -3,6 +3,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 
+#include <esp_err.h>
+
 #include <mqtt_client.h>
 
 typedef struct {

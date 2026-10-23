@@ -14,12 +14,19 @@ menu "Telemetry"
             help
                 Time interval for sending sensor messages
 
-        config SENSOR_ERROR_SLEEP_TIME
+        config ESP_SENSOR_ERROR_SLEEP_TIME
             int "Sensor sleep time on read error"
             default 1
             range 1 86400
             help
                 Sensor sleep time on read error
+
+        config ESP_SENSOR_ERROR_THRASHOLD
+            int "Sensor sleep trashold on read error"
+            default 10
+            range 1 1000
+            help
+                Sensor sleep trashold on read error
     endmenu
 
     menu "Wi-Fi Settings"

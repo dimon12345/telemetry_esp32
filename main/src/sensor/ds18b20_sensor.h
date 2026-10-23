@@ -14,5 +14,5 @@ typedef struct {
     EventGroupHandle_t event_group;
 } sensor_handle_t;
 
-void sensor_init(sensor_handle_t *handle);
+esp_err_t sensor_init(sensor_handle_t *handle);
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature);

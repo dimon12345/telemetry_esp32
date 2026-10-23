@@ -19,15 +19,6 @@ static const char *TAG = "MAIN";
 void app_main(void) {
     ESP_LOGI(TAG, "Start");
 
-    EventGroupHandle_t event_group = xEventGroupCreate();
-    if (event_group == NULL) {
-        ESP_LOGE(TAG, "No memory. Restart ...");
-        esp_restart();
-    }
-
-    sensor_handle_t sensor_handle = {.event_group = event_group};
-    sensor_init(&sensor_handle);
-
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
             err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -40,6 +31,12 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+    EventGroupHandle_t event_group = xEventGroupCreate();
+    if (event_group == NULL) {
+        ESP_LOGE(TAG, "No memory. Restart ...");
+        esp_restart();
+    }
+
     esp_netif_create_default_wifi_sta();
 
     wifi_handle_t wifi_handle = {.event_group = event_group};
@@ -48,10 +45,26 @@ void app_main(void) {
     mqtt_handle_t mqtt_handle = {.event_group = event_group};
     ESP_ERROR_CHECK(mqtt_init(&mqtt_handle));
 
+    sensor_handle_t sensor_handle = {.event_group = event_group};
+
+    int init_try = 0;
+    for (; init_try < CONFIG_ESP_SENSOR_ERROR_THRASHOLD; ++init_try) {
+        if (sensor_init(&sensor_handle) == ESP_OK) {
+            break;
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_ESP_SENSOR_ERROR_SLEEP_TIME));
+    }
+
+    if (init_try >= CONFIG_ESP_SENSOR_ERROR_THRASHOLD) {
+        ESP_LOGE(TAG, "Sensor init error thrashold exceeded. Restart ...");
+        esp_restart();
+    }
+
     ESP_LOGI(TAG, "All ready!");
 
     float temperature = 0.f;
 
+    int read_try = 0;
     for (;;) {
         xEventGroupWaitBits(event_group, MQTT_CONNECTED_BIT | SENSOR_READY_BIT,
             pdFALSE, pdTRUE, portMAX_DELAY);
@@ -59,9 +72,14 @@ void app_main(void) {
         err = sensor_read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "read sensor error");
-            vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_SENSOR_ERROR_SLEEP_TIME));
+            vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_ESP_SENSOR_ERROR_SLEEP_TIME));
+            if (read_try++ >= CONFIG_ESP_SENSOR_ERROR_THRASHOLD) {
+                ESP_LOGE(TAG, "Sensor read error thrashold exceeded. Restart ...");
+                esp_restart();
+            }
             continue;
         }
+        read_try = 0;
 
         err = mqtt_send_temperature(&mqtt_handle, temperature);
         if (err == ESP_OK) {
