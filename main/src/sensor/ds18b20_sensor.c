@@ -38,7 +38,7 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
     if (handle->device) {
         esp_err_t del_err = ds18b20_del_device(handle->device);
         if (del_err != ESP_OK) {
-            ESP_LOGW(TAG, "Delete sensor device errorr: %s (0x%X)",
+            ESP_LOGW(TAG, "Delete sensor device error: %s (0x%X)",
                     esp_err_to_name(del_err), del_err);
         }
 
@@ -54,7 +54,7 @@ cleanup:
     if (iter) {
         esp_err_t del_err = onewire_del_device_iter(iter);
         if (del_err != ESP_OK) {
-            ESP_LOGW(TAG, "Delete iterator errorr: %s (0x%X)",
+            ESP_LOGW(TAG, "Delete iterator error: %s (0x%X)",
                     esp_err_to_name(del_err), del_err);
         }
     }
