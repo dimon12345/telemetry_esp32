@@ -43,27 +43,23 @@ void app_main(void) {
         esp_restart();
     }
 
+    // Sensor
+    sensor_handle_t sensor_handle = {.event_group = event_group};
+    err = sensor_init(&sensor_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(
+                TAG, "Sensor init error: %s (0x%X)", esp_err_to_name(err), err);
+    }
+
     // Wi-Fi
     esp_netif_create_default_wifi_sta();
 
     wifi_handle_t wifi_handle = {.event_group = event_group};
     ESP_ERROR_CHECK(wifi_init(&wifi_handle));
 
-    // Sensor
-    sensor_handle_t sensor_handle = {.event_group = event_group};
-
-    int init_try = 0;
-    for (; init_try < SENSOR_ERROR_INIT_THRASHOLD; ++init_try) {
-        if (sensor_init(&sensor_handle) == ESP_OK) {
-            break;
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000 * SENSOR_ERROR_INIT_SLEEP_TIME));
-    }
-
-    if (init_try >= SENSOR_ERROR_INIT_THRASHOLD) {
-        ESP_LOGE(TAG, "Sensor init error thrashold exceeded. Restart ...");
-        esp_restart();
-    }
+    xEventGroupWaitBits(event_group,
+                    WIFI_CONNECTED_BIT, pdFALSE, pdTRUE,
+                    portMAX_DELAY);
 
     // MQTT
     mqtt_handle_t mqtt_handle = {.event_group = event_group};
@@ -71,35 +67,41 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "All ready!");
 
+    TickType_t no_error_time = xTaskGetTickCount();
+    TickType_t restart_on_errors_timeout_ticks =
+            pdMS_TO_TICKS(30 * 60 * 1000); // 30 min
+
     float temperature = 0.f;
 
-    int read_try = 0;
     for (;;) {
-        xEventGroupWaitBits(event_group, MQTT_CONNECTED_BIT | SENSOR_READY_BIT,
-            pdFALSE, pdTRUE, portMAX_DELAY);
+        xEventGroupWaitBits(event_group,
+                WIFI_CONNECTED_BIT | MQTT_CONNECTED_BIT, pdFALSE, pdTRUE,
+                portMAX_DELAY);
 
         err = sensor_read_temperature(&sensor_handle, &temperature);
+        if (err == ESP_OK) {
+            err = mqtt_send_temperature(&mqtt_handle, temperature);
+            if (err == ESP_OK) {
+                no_error_time = xTaskGetTickCount();
+                ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
+            } else {
+                ESP_LOGE(TAG, "MQTT send temperature error: %s (0x%X)",
+                        esp_err_to_name(err), err);
+            }
+        } else {
+            ESP_LOGE(TAG, "Read sensor error: %s (0x%X)", esp_err_to_name(err),
+                    err);
+        }
+
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "read sensor error");
-            vTaskDelay(pdMS_TO_TICKS(1000 * SENSOR_ERROR_SLEEP_TIME));
-            if (read_try++ >= SENSOR_ERROR_THRASHOLD) {
-                ESP_LOGE(TAG, "Sensor read error thrashold exceeded. Restart ...");
+            if ((xTaskGetTickCount() - no_error_time) >=
+                    restart_on_errors_timeout_ticks) {
+                ESP_LOGE(TAG, "Can't recovery from errors. Restart ...");
                 esp_restart();
             }
-            continue;
-        }
-        read_try = 0;
-
-        err = mqtt_send_temperature(&mqtt_handle, temperature);
-        if (err == ESP_OK) {
-            ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
-        } else {
-            ESP_LOGE(TAG, "MQTT publish error.");
-            vTaskDelay(
-                    pdMS_TO_TICKS(1000 * MQTT_LOST_WIFI_SLEEP_TIME));
-            continue;
         }
 
-        vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL));
+        vTaskDelay(pdMS_TO_TICKS(
+                1000 * CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL));
     }
 }
