@@ -22,11 +22,11 @@ menu "Telemetry"
                 Sensor sleep time on read error
 
         config ESP_SENSOR_ERROR_THRASHOLD
-            int "Sensor sleep trashold on read error"
+            int "Sensor error trashold on read"
             default 10
             range 1 1000
             help
-                Sensor sleep trashold on read error
+                Sensor error trashold on read
     endmenu
 
     menu "Wi-Fi Settings"
@@ -67,6 +67,21 @@ menu "Telemetry"
             range 1 86400
             help
                 Wi-Fi reconnect timeout for scan AP in seconds
+
+        config ESP_WIFI_ERROR_INIT_SLEEP_TIME
+            int "Wi-Fi sleep time on init error"
+            default 1
+            range 1 86400
+            help
+                Wi-Fi sleep time on init error
+
+        config ESP_SENSOR_ERROR_INIT_THRASHOLD
+            int "Wi-Fi error trashold on init"
+            default 10
+            range 1 1000
+            help
+                Wi-Fi error trashold on init
+
     endmenu
 
     menu "MQTT Settings"

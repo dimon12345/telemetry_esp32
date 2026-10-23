@@ -42,13 +42,13 @@ void app_main(void) {
 
     wifi_handle_t wifi_handle = {.event_group = event_group};
     int init_try = 0;
-    for (; init_try < CONFIG_ESP_WIFI_ERROR_TRASHOLD; ++init_try) {
+    for (; init_try < CONFIG_ESP_SENSOR_ERROR_INIT_THRASHOLD; ++init_try) {
         if (wifi_init(&wifi_handle) == ESP_OK) {
             break;
         }
-        vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_ESP_WIFI_ERROR_SLEEP_TIME));
+        vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_ESP_WIFI_ERROR_INIT_SLEEP_TIME));
     }
-    if (init_try >= CONFIG_ESP_WIFI_ERROR_TRASHOLD) {
+    if (init_try >= CONFIG_ESP_SENSOR_ERROR_INIT_THRASHOLD) {
         ESP_LOGE(TAG, "Wi-Fi init error thrashold exceeded. Restart ...");
         esp_restart();
     }

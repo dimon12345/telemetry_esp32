@@ -4,6 +4,7 @@
 #include <stdatomic.h>
 #include <stddef.h>
 
+#include <esp_check.h>
 #include <esp_log.h>
 #include <freertos/idf_additions.h>
 
