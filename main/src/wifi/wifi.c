@@ -10,17 +10,14 @@
 
 #include "event_group_bits.h"
 
-#define WIFI_DISCONNECT_THRESHOLD 10
-#define WIFI_BAD_PASSWORD_SLEEP_TIME 60
-#define WIFI_RECONNECT_SLEEP_TIME 30
-#define WIFI_AP_SCAN_SLEEP_TIME 1
+#define WIFI_MAX_RETRY_DELAY 60
 
 static const char *TAG = "WIFI";
 
 static void timer_wifi_connect_cb(void *arg) { esp_wifi_connect(); }
 
-static void request_wifi_connect(wifi_handle_t *handle, int sleep_seconds) {
-    uint64_t delay_us = (uint64_t)sleep_seconds * 1000 * 1000;
+static void request_retry_connect(wifi_handle_t *handle) {
+    uint64_t delay_us = (uint64_t)handle->retry_delay * 1000 * 1000;
     if (esp_timer_is_active(handle->connect_timer)) {
         return;
     }
@@ -38,32 +35,27 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 
     case WIFI_EVENT_STA_DISCONNECTED:
         xEventGroupClearBits(handle->event_group, WIFI_CONNECTED_BIT);
-        atomic_fetch_add(&handle->wifi_disconnect_count, 1);
-        if (atomic_load(&handle->wifi_disconnect_count) >=
-                WIFI_DISCONNECT_THRESHOLD) {
-            ESP_LOGE(TAG, "Wi-Fi disconnect threshold exceeded. Restart ...");
-            esp_restart();
-        }
-
         wifi_event_sta_disconnected_t *event =
                 (wifi_event_sta_disconnected_t *)event_data;
         switch (event->reason) {
         case WIFI_REASON_AUTH_FAIL:
         case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
             ESP_LOGE(TAG, "Wi-Fi password error");
-            request_wifi_connect(handle, WIFI_BAD_PASSWORD_SLEEP_TIME);
             break;
 
         case WIFI_REASON_NO_AP_FOUND:
-            ESP_LOGE(TAG, "Wi-Fi Access Point not found %d",
-                    handle->wifi_disconnect_count);
-            request_wifi_connect(handle, WIFI_AP_SCAN_SLEEP_TIME);
+            ESP_LOGE(TAG, "Wi-Fi Access Point not found");
             break;
 
         default:
             ESP_LOGE(TAG, "Wi-Fi disconnected with reason %d", event->reason);
-            request_wifi_connect(handle, WIFI_RECONNECT_SLEEP_TIME);
             break;
+        }
+
+        request_retry_connect(handle);
+        handle->retry_delay *= 2;
+        if (handle->retry_delay > WIFI_MAX_RETRY_DELAY) {
+            handle->retry_delay = WIFI_MAX_RETRY_DELAY;
         }
         break;
     }
@@ -73,7 +65,7 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
         int32_t event_id, void *event_data) {
     wifi_handle_t *handle = (wifi_handle_t *)arg;
     xEventGroupSetBits(handle->event_group, WIFI_CONNECTED_BIT);
-    atomic_store(&handle->wifi_disconnect_count, 0);
+    handle->retry_delay = 1;
 }
 
 void init_wifi_timer(wifi_handle_t *handle) {

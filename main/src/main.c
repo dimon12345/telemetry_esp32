@@ -47,7 +47,8 @@ void app_main(void) {
     // Wi-Fi
     esp_netif_create_default_wifi_sta();
 
-    wifi_handle_t wifi_handle = {.event_group = event_group};
+    wifi_handle_t wifi_handle = {.event_group = event_group, .retry_delay = 1};
+
     ESP_ERROR_CHECK(wifi_init(&wifi_handle));
 
     xEventGroupWaitBits(

@@ -10,9 +10,9 @@
 #include <esp_wifi.h>
 
 typedef struct {
-    _Atomic int wifi_disconnect_count;
     esp_timer_handle_t connect_timer;
     EventGroupHandle_t event_group;
+    int retry_delay;
 } wifi_handle_t;
 
 esp_err_t wifi_init(wifi_handle_t *handle);
