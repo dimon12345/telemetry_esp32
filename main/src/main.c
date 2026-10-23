@@ -37,8 +37,6 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    ESP_LOGI(TAG, "app_main #1");
-
     // Sensor
     sensor_handle_t sensor_handle = {0};
     err = sensor_init(&sensor_handle);
@@ -46,8 +44,6 @@ void app_main(void) {
         ESP_LOGE(
                 TAG, "Sensor init error: %s (0x%X)", esp_err_to_name(err), err);
     }
-
-    ESP_LOGI(TAG, "app_main #2");
 
     // Event group
     EventGroupHandle_t event_group = xEventGroupCreate();

@@ -44,8 +44,8 @@ menu "Telemetry"
 
         config TELEMETRY_MQTT_TOPIC
             string "MQTT Topic"
-            default "/house/esp32"
+            default "house/esp32/state"
             help
-                MQTT topic with format house/*/sensor_name
+                MQTT topic with format house/sensor_name/state
     endmenu
 endmenu
