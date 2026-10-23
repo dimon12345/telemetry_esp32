@@ -12,9 +12,10 @@ static const char *TAG = "SENSOR";
 esp_err_t sensor_init(sensor_handle_t *handle) {
     onewire_bus_config_t bus_config = {
             .bus_gpio_num = CONFIG_TELEMETRY_SENSOR_GPIO};
-
     onewire_bus_rmt_config_t rmt_config = {
             .max_rx_bytes = DS18B20_SCRATCHPAD_SIZE};
+
+    esp_err_t ret = ESP_OK;
     onewire_device_iter_handle_t iter = NULL;
     ds18b20_config_t ds_cfg = {};
     onewire_device_t next_onewire_device;
@@ -28,25 +29,28 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
         ESP_LOGE(TAG, "bus already exists");
     }
 
-    ESP_RETURN_ON_ERROR(onewire_new_device_iter(handle->bus, &iter), TAG,
+    ESP_GOTO_ON_ERROR(onewire_new_device_iter(handle->bus, &iter), cleanup, TAG,
             "New device iterator error");
-    ESP_RETURN_ON_ERROR(
-            onewire_device_iter_get_next(iter, &next_onewire_device), TAG,
-            "Next device error");
+    ESP_GOTO_ON_ERROR(onewire_device_iter_get_next(iter, &next_onewire_device),
+            cleanup, TAG, "Next device error");
 
     if (handle->device) {
-        ESP_RETURN_ON_ERROR(ds18b20_del_device(handle->device), TAG, "Delete device error");
+        ESP_ERROR_CHECK(ds18b20_del_device(handle->device));
         handle->device = NULL;
     }
-    ESP_RETURN_ON_ERROR(ds18b20_new_device_from_enumeration(
-                                &next_onewire_device, &ds_cfg, &handle->device),
-            TAG, "New device error");
-
-    ESP_RETURN_ON_ERROR(
-            onewire_del_device_iter(iter), TAG, "Delete device iterator error");
+    ESP_GOTO_ON_ERROR(ds18b20_new_device_from_enumeration(
+                              &next_onewire_device, &ds_cfg, &handle->device),
+            cleanup, TAG, "New device error");
+    ESP_ERROR_CHECK(onewire_del_device_iter(iter));
 
     handle->sensor_ready = true;
     return ESP_OK;
+
+cleanup:
+    if (iter) {
+        ESP_ERROR_CHECK(onewire_del_device_iter(iter));
+    }
+    return ret;
 }
 
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
