@@ -12,14 +12,6 @@
 #include "sensor/ds18b20_sensor.h"
 #include "wifi/wifi.h"
 
-#define WIFI_ERROR_INIT_SLEEP_TIME 1
-#define WIFI_ERROR_INIT_THRASHOLD 10
-#define SENSOR_ERROR_INIT_SLEEP_TIME 1
-#define SENSOR_ERROR_INIT_THRASHOLD 10
-#define SENSOR_ERROR_SLEEP_TIME 1
-#define SENSOR_ERROR_THRASHOLD 10
-#define MQTT_LOST_WIFI_SLEEP_TIME 1
-
 static const char *TAG = "MAIN";
 
 void app_main(void) {

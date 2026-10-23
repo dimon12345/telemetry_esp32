@@ -1,11 +1,8 @@
 #include "ds18b20_sensor.h"
 
-#include "esp_check.h"
+#include <esp_check.h>
 #include <sdkconfig.h>
 
-#include "event_group_bits.h"
-
-// 1byte ROM command + 8byte ROM number + 1byte device command
 #define DS18B20_SCRATCHPAD_SIZE 10
 static const char *TAG = "SENSOR";
 
@@ -26,8 +23,6 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
         ESP_RETURN_ON_ERROR(
                 onewire_new_bus_rmt(&bus_config, &rmt_config, &handle->bus),
                 TAG, "New bus RMT error");
-    } else {
-        ESP_LOGI(TAG, "Reusing existing 1-Wire bus");
     }
 
     ESP_GOTO_ON_ERROR(onewire_new_device_iter(handle->bus, &iter), cleanup, TAG,
@@ -37,12 +32,12 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
 
     if (handle->device) {
         esp_err_t del_err = ds18b20_del_device(handle->device);
-        if (del_err != ESP_OK) {
+        if (del_err == ESP_OK) {
+            handle->device = NULL;
+        } else {
             ESP_LOGW(TAG, "Delete sensor device error: %s (0x%X)",
                     esp_err_to_name(del_err), del_err);
         }
-
-        handle->device = NULL;
     }
     ESP_GOTO_ON_ERROR(ds18b20_new_device_from_enumeration(
                               &next_onewire_device, &ds_cfg, &handle->device),

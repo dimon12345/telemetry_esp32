@@ -10,7 +10,6 @@
 
 #include "event_group_bits.h"
 
-#define ATOMIC_LOAD_TIME_INTERVAL 100
 #define WIFI_DISCONNECT_THRESHOLD 10
 #define WIFI_BAD_PASSWORD_SLEEP_TIME 60
 #define WIFI_RECONNECT_SLEEP_TIME 30
@@ -18,7 +17,7 @@
 
 static const char *TAG = "WIFI";
 
-static void timer_wifi_connect(void *arg) { esp_wifi_connect(); }
+static void timer_wifi_connect_cb(void *arg) { esp_wifi_connect(); }
 
 static void request_wifi_connect(wifi_handle_t *handle, int sleep_seconds) {
     uint64_t delay_us = (uint64_t)sleep_seconds * 1000 * 1000;
@@ -83,7 +82,7 @@ void init_wifi_timer(wifi_handle_t *handle) {
     }
 
     const esp_timer_create_args_t once_timer_args = {
-            .callback = &timer_wifi_connect, .arg = handle};
+            .callback = &timer_wifi_connect_cb, .arg = handle};
 
     ESP_ERROR_CHECK(esp_timer_create(&once_timer_args, &handle->connect_timer));
 }
