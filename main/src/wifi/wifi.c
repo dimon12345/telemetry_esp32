@@ -36,7 +36,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         xEventGroupClearBits(handle->event_group, WIFI_CONNECTED_BIT);
         atomic_fetch_add(&handle->wifi_disconnect_count, 1);
         if (atomic_load(&handle->wifi_disconnect_count) >=
-                CONFIG_ESP_WIFI_DISCONNECT_THRESHOLD) {
+                CONFIG_TELEMETRY_WIFI_DISCONNECT_THRESHOLD) {
             ESP_LOGE(TAG, "Wi-Fi disconnect threshold exceeded. Restart ...");
             esp_restart();
         }
@@ -48,18 +48,18 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
             ESP_LOGE(TAG, "Wi-Fi password error");
             request_wifi_connect(
-                    handle, CONFIG_ESP_WIFI_BAD_PASSWORD_SLEEP_TIME);
+                    handle, CONFIG_TELEMETRY_WIFI_BAD_PASSWORD_SLEEP_TIME);
             break;
 
         case WIFI_REASON_NO_AP_FOUND:
             ESP_LOGE(TAG, "Wi-Fi Access Point not found %d",
                     handle->wifi_disconnect_count);
-            request_wifi_connect(handle, CONFIG_ESP_WIFI_AP_SCAN_SLEEP_TIME);
+            request_wifi_connect(handle, CONFIG_TELEMETRY_WIFI_AP_SCAN_SLEEP_TIME);
             break;
 
         default:
             ESP_LOGE(TAG, "Wi-Fi disconnected with reason %d", event->reason);
-            request_wifi_connect(handle, CONFIG_ESP_WIFI_RECONNECT_SLEEP_TIME);
+            request_wifi_connect(handle, CONFIG_TELEMETRY_WIFI_RECONNECT_SLEEP_TIME);
             break;
         }
         break;
@@ -95,8 +95,8 @@ esp_err_t wifi_init(wifi_handle_t *handle) {
             "Got IP event register error");
 
     wifi_config_t wifi_config = {
-            .sta = {.ssid = CONFIG_ESP_WIFI_SSID,
-                    .password = CONFIG_ESP_WIFI_PASSWORD,
+            .sta = {.ssid = CONFIG_TELEMETRY_WIFI_SSID,
+                    .password = CONFIG_TELEMETRY_WIFI_PASSWORD,
                     .threshold.authmode = WIFI_AUTH_WPA2_PSK},
     };
 

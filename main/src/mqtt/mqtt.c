@@ -48,9 +48,9 @@ static void mqtt_event_handler(
 
 esp_err_t mqtt_init(mqtt_handle_t *handle) {
     esp_mqtt_client_config_t mqtt_cfg = {
-            .broker.address.uri = CONFIG_ESP_MQTT_BROKER_URI,
-            .credentials = {.username = CONFIG_ESP_MQTT_USERNAME,
-                    .authentication.password = CONFIG_ESP_MQTT_PASSWORD}};
+            .broker.address.uri = CONFIG_TELEMETRY_MQTT_BROKER_URI,
+            .credentials = {.username = CONFIG_TELEMETRY_MQTT_USERNAME,
+                    .authentication.password = CONFIG_TELEMETRY_MQTT_PASSWORD}};
 
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
     if (client == NULL) {
@@ -82,7 +82,7 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
     }
 
     char topic[64];
-    len = snprintf(topic, sizeof(topic), "%s/state", CONFIG_ESP_MQTT_TOPIC);
+    len = snprintf(topic, sizeof(topic), "%s/state", CONFIG_TELEMETRY_MQTT_TOPIC);
     if (len < 0 || len >= (int)sizeof(topic)) {
         return ESP_FAIL;
     }
