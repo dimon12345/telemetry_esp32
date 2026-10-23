@@ -11,5 +11,5 @@ set(TELEMETRY_HEADERS
 idf_component_register(
     SRCS ${TELEMETRY_SOURCES}
     INCLUDE_DIRS ${TELEMETRY_HEADERS}
-    PRIV_REQUIRES esp_wifi esp_event esp_netif mqtt nvs_flash
+    PRIV_REQUIRES esp_wifi esp_event esp_netif esp_timer mqtt nvs_flash
 )
