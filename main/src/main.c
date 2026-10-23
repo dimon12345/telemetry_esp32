@@ -37,17 +37,26 @@ void app_main(void) {
         esp_restart();
     }
 
+    // Wi-Fi
     esp_netif_create_default_wifi_sta();
 
     wifi_handle_t wifi_handle = {.event_group = event_group};
-    ESP_ERROR_CHECK(wifi_init(&wifi_handle));
+    int init_try = 0;
+    for (; init_try < CONFIG_ESP_WIFI_ERROR_TRASHOLD; ++init_try) {
+        if (wifi_init(&wifi_handle) == ESP_OK) {
+            break;
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_ESP_WIFI_ERROR_SLEEP_TIME));
+    }
+    if (init_try >= CONFIG_ESP_WIFI_ERROR_TRASHOLD) {
+        ESP_LOGE(TAG, "Wi-Fi init error thrashold exceeded. Restart ...");
+        esp_restart();
+    }
 
-    mqtt_handle_t mqtt_handle = {.event_group = event_group};
-    ESP_ERROR_CHECK(mqtt_init(&mqtt_handle));
-
+    // Sensor
     sensor_handle_t sensor_handle = {.event_group = event_group};
 
-    int init_try = 0;
+    init_try = 0;
     for (; init_try < CONFIG_ESP_SENSOR_ERROR_THRASHOLD; ++init_try) {
         if (sensor_init(&sensor_handle) == ESP_OK) {
             break;
@@ -59,6 +68,10 @@ void app_main(void) {
         ESP_LOGE(TAG, "Sensor init error thrashold exceeded. Restart ...");
         esp_restart();
     }
+
+    // MQTT
+    mqtt_handle_t mqtt_handle = {.event_group = event_group};
+    ESP_ERROR_CHECK(mqtt_init(&mqtt_handle));
 
     ESP_LOGI(TAG, "All ready!");
 

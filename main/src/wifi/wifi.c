@@ -83,12 +83,15 @@ esp_err_t wifi_init(wifi_handle_t *handle) {
     init_wifi_timer(handle);
 
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&init_config));
+    ESP_RETURN_ON_ERROR(esp_wifi_init(&init_config), TAG,
+            "Wi-Fi init error");
 
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(
-            WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, handle, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-            IP_EVENT_STA_GOT_IP, &got_ip_event_handler, handle, NULL));
+    ESP_RETURN_ON_ERROR(esp_event_handler_instance_register(
+            WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, handle, NULL),
+            TAG, "Wi-Fi event register error");
+    ESP_RETURN_ON_ERROR(esp_event_handler_instance_register(IP_EVENT,
+            IP_EVENT_STA_GOT_IP, &got_ip_event_handler, handle, NULL), TAG,
+            "Got IP event register error");
 
     wifi_config_t wifi_config = {
             .sta = {.ssid = CONFIG_ESP_WIFI_SSID,
@@ -96,9 +99,11 @@ esp_err_t wifi_init(wifi_handle_t *handle) {
                     .threshold.authmode = WIFI_AUTH_WPA2_PSK},
     };
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
+    ESP_RETURN_ON_ERROR(esp_wifi_set_mode(WIFI_MODE_STA), TAG,
+            "STA set mode error");
+    ESP_RETURN_ON_ERROR(esp_wifi_set_config(WIFI_IF_STA, &wifi_config), TAG,
+            "Wi-Fi set config error");
+    ESP_RETURN_ON_ERROR(esp_wifi_start(), TAG, "Wi-Fi start error");
 
     ESP_LOGI(TAG, "Connecting Wi-Fi ...");
     return ESP_OK;
