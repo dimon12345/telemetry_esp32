@@ -59,9 +59,9 @@ esp_err_t mqtt_init(mqtt_handle_t *handle) {
     }
     handle->client = client;
 
-    ESP_RETURN_ON_ERROR(esp_mqtt_client_register_event(
-            handle->client, ESP_EVENT_ANY_ID, mqtt_event_handler, handle), TAG,
-            "MQTT client register event error");
+    ESP_RETURN_ON_ERROR(esp_mqtt_client_register_event(handle->client,
+                                ESP_EVENT_ANY_ID, mqtt_event_handler, handle),
+            TAG, "MQTT client register event error");
 
     ESP_RETURN_ON_ERROR(esp_mqtt_client_start(handle->client), TAG,
             "MQTT client start error");
@@ -76,19 +76,21 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
     }
 
     char payload[32];
-    int len = snprintf(payload, sizeof(payload), "{\"temperature\":%.2f}", (double)temperature);
+    int len = snprintf(payload, sizeof(payload), "{\"temperature\":%.2f}",
+            (double)temperature);
     if (len < 0 || len >= (int)sizeof(payload)) {
         return ESP_FAIL;
     }
 
     char topic[64];
-    len = snprintf(topic, sizeof(topic), "%s/state", CONFIG_TELEMETRY_MQTT_TOPIC);
+    len = snprintf(
+            topic, sizeof(topic), "%s/state", CONFIG_TELEMETRY_MQTT_TOPIC);
     if (len < 0 || len >= (int)sizeof(topic)) {
         return ESP_FAIL;
     }
 
-    int msg_id = esp_mqtt_client_publish(handle->client, topic,
-            payload, 0, MQTT_QOS, 0);
+    int msg_id = esp_mqtt_client_publish(
+            handle->client, topic, payload, 0, MQTT_QOS, 0);
     if (msg_id < 0) {
         return ESP_FAIL;
     }
