@@ -74,6 +74,10 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 void init_wifi_timer(wifi_handle_t *handle) {
+    if (handle->connect_timer) {
+        return;
+    }
+
     const esp_timer_create_args_t once_timer_args = {
             .callback = &timer_wifi_connect, .arg = handle};
 
