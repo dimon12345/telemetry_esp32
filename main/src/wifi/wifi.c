@@ -11,6 +11,11 @@
 #include "event_group_bits.h"
 
 #define ATOMIC_LOAD_TIME_INTERVAL 100
+#define WIFI_DISCONNECT_THRESHOLD 10
+#define WIFI_BAD_PASSWORD_SLEEP_TIME 60
+#define WIFI_RECONNECT_SLEEP_TIME 30
+#define WIFI_AP_SCAN_SLEEP_TIME 1
+
 static const char *TAG = "WIFI";
 
 static void timer_wifi_connect(void *arg) { esp_wifi_connect(); }
@@ -36,7 +41,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         xEventGroupClearBits(handle->event_group, WIFI_CONNECTED_BIT);
         atomic_fetch_add(&handle->wifi_disconnect_count, 1);
         if (atomic_load(&handle->wifi_disconnect_count) >=
-                CONFIG_TELEMETRY_WIFI_DISCONNECT_THRESHOLD) {
+                WIFI_DISCONNECT_THRESHOLD) {
             ESP_LOGE(TAG, "Wi-Fi disconnect threshold exceeded. Restart ...");
             esp_restart();
         }
@@ -48,18 +53,18 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
             ESP_LOGE(TAG, "Wi-Fi password error");
             request_wifi_connect(
-                    handle, CONFIG_TELEMETRY_WIFI_BAD_PASSWORD_SLEEP_TIME);
+                    handle, WIFI_BAD_PASSWORD_SLEEP_TIME);
             break;
 
         case WIFI_REASON_NO_AP_FOUND:
             ESP_LOGE(TAG, "Wi-Fi Access Point not found %d",
                     handle->wifi_disconnect_count);
-            request_wifi_connect(handle, CONFIG_TELEMETRY_WIFI_AP_SCAN_SLEEP_TIME);
+            request_wifi_connect(handle, WIFI_AP_SCAN_SLEEP_TIME);
             break;
 
         default:
             ESP_LOGE(TAG, "Wi-Fi disconnected with reason %d", event->reason);
-            request_wifi_connect(handle, CONFIG_TELEMETRY_WIFI_RECONNECT_SLEEP_TIME);
+            request_wifi_connect(handle, WIFI_RECONNECT_SLEEP_TIME);
             break;
         }
         break;

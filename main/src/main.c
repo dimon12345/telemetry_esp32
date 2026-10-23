@@ -12,7 +12,13 @@
 #include "sensor/ds18b20_sensor.h"
 #include "wifi/wifi.h"
 
-#define CHECK_EVENT_GROUP_BIT_TIME_INTERVAL 1
+#define WIFI_ERROR_INIT_SLEEP_TIME 1
+#define WIFI_ERROR_INIT_THRASHOLD 10
+#define SENSOR_ERROR_INIT_SLEEP_TIME 1
+#define SENSOR_ERROR_INIT_THRASHOLD 10
+#define SENSOR_ERROR_SLEEP_TIME 1
+#define SENSOR_ERROR_THRASHOLD 10
+#define MQTT_LOST_WIFI_SLEEP_TIME 1
 
 static const char *TAG = "MAIN";
 
@@ -42,13 +48,13 @@ void app_main(void) {
 
     wifi_handle_t wifi_handle = {.event_group = event_group};
     int init_try = 0;
-    for (; init_try < CONFIG_TELEMETRY_SENSOR_ERROR_INIT_THRASHOLD; ++init_try) {
+    for (; init_try < WIFI_ERROR_INIT_THRASHOLD; ++init_try) {
         if (wifi_init(&wifi_handle) == ESP_OK) {
             break;
         }
-        vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_TELEMETRY_WIFI_ERROR_INIT_SLEEP_TIME));
+        vTaskDelay(pdMS_TO_TICKS(1000 * WIFI_ERROR_INIT_SLEEP_TIME));
     }
-    if (init_try >= CONFIG_TELEMETRY_SENSOR_ERROR_INIT_THRASHOLD) {
+    if (init_try >= WIFI_ERROR_INIT_THRASHOLD) {
         ESP_LOGE(TAG, "Wi-Fi init error thrashold exceeded. Restart ...");
         esp_restart();
     }
@@ -57,14 +63,14 @@ void app_main(void) {
     sensor_handle_t sensor_handle = {.event_group = event_group};
 
     init_try = 0;
-    for (; init_try < CONFIG_TELEMETRY_SENSOR_ERROR_THRASHOLD; ++init_try) {
+    for (; init_try < SENSOR_ERROR_INIT_THRASHOLD; ++init_try) {
         if (sensor_init(&sensor_handle) == ESP_OK) {
             break;
         }
-        vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_TELEMETRY_SENSOR_ERROR_SLEEP_TIME));
+        vTaskDelay(pdMS_TO_TICKS(1000 * SENSOR_ERROR_INIT_SLEEP_TIME));
     }
 
-    if (init_try >= CONFIG_TELEMETRY_SENSOR_ERROR_THRASHOLD) {
+    if (init_try >= SENSOR_ERROR_INIT_THRASHOLD) {
         ESP_LOGE(TAG, "Sensor init error thrashold exceeded. Restart ...");
         esp_restart();
     }
@@ -85,8 +91,8 @@ void app_main(void) {
         err = sensor_read_temperature(&sensor_handle, &temperature);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "read sensor error");
-            vTaskDelay(pdMS_TO_TICKS(1000 * CONFIG_TELEMETRY_SENSOR_ERROR_SLEEP_TIME));
-            if (read_try++ >= CONFIG_TELEMETRY_SENSOR_ERROR_THRASHOLD) {
+            vTaskDelay(pdMS_TO_TICKS(1000 * SENSOR_ERROR_SLEEP_TIME));
+            if (read_try++ >= SENSOR_ERROR_THRASHOLD) {
                 ESP_LOGE(TAG, "Sensor read error thrashold exceeded. Restart ...");
                 esp_restart();
             }
@@ -100,7 +106,7 @@ void app_main(void) {
         } else {
             ESP_LOGE(TAG, "MQTT publish error.");
             vTaskDelay(
-                    pdMS_TO_TICKS(1000 * CONFIG_TELEMETRY_MQTT_LOST_WIFI_SLEEP_TIME));
+                    pdMS_TO_TICKS(1000 * MQTT_LOST_WIFI_SLEEP_TIME));
             continue;
         }
 
