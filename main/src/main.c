@@ -62,9 +62,8 @@ void app_main(void) {
     wifi_handle_t wifi_handle = {.event_group = event_group};
     ESP_ERROR_CHECK(wifi_init(&wifi_handle));
 
-    xEventGroupWaitBits(event_group,
-                    WIFI_CONNECTED_BIT, pdFALSE, pdTRUE,
-                    portMAX_DELAY);
+    xEventGroupWaitBits(
+            event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
 
     // MQTT
     mqtt_handle_t mqtt_handle = {.event_group = event_group};
