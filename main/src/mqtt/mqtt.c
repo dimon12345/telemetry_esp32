@@ -8,6 +8,7 @@
 
 #include "event_group_bits.h"
 
+#define MQTT_QOS 0
 static const char *TAG = "MQTT";
 
 static void mqtt_event_handler(
@@ -79,7 +80,7 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
     ESP_LOGW(TAG, "payload: %s", payload);
 
     int msg_id = esp_mqtt_client_publish(handle->client, CONFIG_ESP_MQTT_TOPIC,
-            payload, 0, CONFIG_ESP_MQTT_QOS, 0);
+            payload, 0, MQTT_QOS, 0);
     if (msg_id < 0) {
         return ESP_FAIL;
     }

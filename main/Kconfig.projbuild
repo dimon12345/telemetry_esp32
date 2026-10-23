@@ -87,13 +87,6 @@ menu "Telemetry"
             help
                 MQTT topic with format house/*/sensor_name
 
-        config ESP_MQTT_QOS
-            int "MQTT message QOS"
-            default 1
-            range 0 2
-            help
-                MQTT message QOS
-
         config ESP_MQTT_LOST_WIFI_SLEEP_TIME
             int "MQTT lost Wi-Fi sleep seconds"
             default 1
