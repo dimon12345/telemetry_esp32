@@ -45,22 +45,23 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
     ESP_RETURN_ON_ERROR(
             onewire_del_device_iter(iter), TAG, "Delete device iterator error");
 
-    atomic_store(&handle->sensor_ready, true);
+    handle->sensor_ready = true;
     return ESP_OK;
 }
 
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
-    if (!atomic_load(&handle->sensor_ready)) {
+    if (!handle->sensor_ready) {
         ESP_RETURN_ON_ERROR(sensor_init(handle), TAG, "Sensor init error");
     }
 
-    ESP_RETURN_ON_ERROR(
-            ds18b20_trigger_temperature_conversion_for_all(handle->bus),
-            TAG, "Trigger temperature conversion error");
+    esp_err_t err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
+    if (err == ESP_OK) {
+        err = ds18b20_get_temperature(handle->device, temperature);
+    }
 
-    ESP_RETURN_ON_ERROR(
-            ds18b20_get_temperature(handle->device, temperature), TAG,
-            "Get temperature error");
+    if (err != ESP_OK) {
+        handle->sensor_ready = false;
+    }
 
     return ESP_OK;
 }
