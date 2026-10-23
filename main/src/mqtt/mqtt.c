@@ -77,7 +77,7 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
 
     char payload[64];
     int len = snprintf(payload, sizeof(payload), "{\"temperature\":%.2f}", (double)temperature);
-    if (len < 0) {
+    if (len < 0 || len >= (int)sizeof(payload)) {
         return ESP_FAIL;
     }
 
