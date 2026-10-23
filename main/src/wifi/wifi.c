@@ -10,11 +10,10 @@
 
 #include "event_group_bits.h"
 
-#define WIFI_MAX_RETRY_DELAY 60
+#define WIFI_MAX_RETRY_DELAY_S 60
+#define WIFI_MIN_RETRY_DELAY_S 1
 
 static const char *TAG = "WIFI";
-
-static void timer_wifi_connect_cb(void *arg) { esp_wifi_connect(); }
 
 static void request_retry_connect(wifi_handle_t *handle) {
     uint64_t delay_us = (uint64_t)handle->retry_delay * 1000 * 1000;
@@ -23,14 +22,34 @@ static void request_retry_connect(wifi_handle_t *handle) {
     }
 
     ESP_ERROR_CHECK(esp_timer_start_once(handle->connect_timer, delay_us));
+
+    handle->retry_delay *= 2;
+    if (handle->retry_delay > WIFI_MAX_RETRY_DELAY_S) {
+        handle->retry_delay = WIFI_MAX_RETRY_DELAY_S;
+    }
 }
+
+static void wifi_try_connect(wifi_handle_t *handle) {
+    esp_err_t err = esp_wifi_connect();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Wi-Fi connect error: %s (0x%X)",
+                esp_err_to_name(err), err);
+        request_retry_connect(handle);
+    }
+}
+
+static void timer_wifi_connect_cb(void *arg) {
+    wifi_handle_t *handle = (wifi_handle_t *)arg;
+    wifi_try_connect(handle);
+}
+
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         int32_t event_id, void *event_data) {
     wifi_handle_t *handle = (wifi_handle_t *)arg;
     switch (event_id) {
     case WIFI_EVENT_STA_START:
-        esp_wifi_connect();
+        wifi_try_connect(handle);
         break;
 
     case WIFI_EVENT_STA_DISCONNECTED:
@@ -53,10 +72,6 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         }
 
         request_retry_connect(handle);
-        handle->retry_delay *= 2;
-        if (handle->retry_delay > WIFI_MAX_RETRY_DELAY) {
-            handle->retry_delay = WIFI_MAX_RETRY_DELAY;
-        }
         break;
     }
 }
@@ -65,7 +80,7 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
         int32_t event_id, void *event_data) {
     wifi_handle_t *handle = (wifi_handle_t *)arg;
     xEventGroupSetBits(handle->event_group, WIFI_CONNECTED_BIT);
-    handle->retry_delay = 1;
+    handle->retry_delay = WIFI_MIN_RETRY_DELAY_S;
 }
 
 void init_wifi_timer(wifi_handle_t *handle) {
@@ -81,6 +96,10 @@ void init_wifi_timer(wifi_handle_t *handle) {
 
 esp_err_t wifi_init(wifi_handle_t *handle) {
     init_wifi_timer(handle);
+
+    if (handle->retry_delay < WIFI_MIN_RETRY_DELAY_S) {
+        handle->retry_delay = WIFI_MIN_RETRY_DELAY_S;
+    }
 
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
     ESP_RETURN_ON_ERROR(esp_wifi_init(&init_config), TAG, "Wi-Fi init error");
