@@ -21,12 +21,13 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
     onewire_device_t next_onewire_device;
 
     if (!handle->bus) {
-        ESP_LOGE(TAG, "create bus");
+        ESP_LOGI(TAG, "Creating 1-Wire bus on GPIO %d",
+                CONFIG_TELEMETRY_SENSOR_GPIO);
         ESP_RETURN_ON_ERROR(
                 onewire_new_bus_rmt(&bus_config, &rmt_config, &handle->bus),
                 TAG, "New bus RMT error");
     } else {
-        ESP_LOGE(TAG, "bus already exists");
+        ESP_LOGI(TAG, "Reusing existing 1-Wire bus");
     }
 
     ESP_GOTO_ON_ERROR(onewire_new_device_iter(handle->bus, &iter), cleanup, TAG,
@@ -35,20 +36,27 @@ esp_err_t sensor_init(sensor_handle_t *handle) {
             cleanup, TAG, "Next device error");
 
     if (handle->device) {
-        ESP_ERROR_CHECK(ds18b20_del_device(handle->device));
+        esp_err_t del_err = ds18b20_del_device(handle->device);
+        if (del_err != ESP_OK) {
+            ESP_LOGW(TAG, "Delete sensor device errorr: %s (0x%X)",
+                    esp_err_to_name(del_err), del_err);
+        }
+
         handle->device = NULL;
     }
     ESP_GOTO_ON_ERROR(ds18b20_new_device_from_enumeration(
                               &next_onewire_device, &ds_cfg, &handle->device),
             cleanup, TAG, "New device error");
-    ESP_ERROR_CHECK(onewire_del_device_iter(iter));
 
     handle->sensor_ready = true;
-    return ESP_OK;
 
 cleanup:
     if (iter) {
-        ESP_ERROR_CHECK(onewire_del_device_iter(iter));
+        esp_err_t del_err = onewire_del_device_iter(iter);
+        if (del_err != ESP_OK) {
+            ESP_LOGW(TAG, "Delete iterator errorr: %s (0x%X)",
+                    esp_err_to_name(del_err), del_err);
+        }
     }
     return ret;
 }
