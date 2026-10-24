@@ -70,8 +70,12 @@ void app_main(void) {
         EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
                 pdFALSE, pdTRUE, restart_on_errors_timeout_ticks);
         if ((bits & CONNECTED_BITS) != CONNECTED_BITS) {
-            ESP_LOGE(TAG, "Connection cannot be established. Restart ...");
-            esp_restart();
+            if (bits & MQTT_CONNECTED_BIT) {
+                ESP_LOGE(TAG, "No MQTT connection ...");
+            } else {
+                ESP_LOGE(TAG, "No connection ...");
+            }
+            continue;
         }
 
         err = sensor_read_temperature(&sensor_handle, &temperature);
