@@ -67,9 +67,12 @@ void app_main(void) {
     float temperature = 0.f;
 
     for (;;) {
-        xEventGroupWaitBits(event_group,
-                WIFI_CONNECTED_BIT | MQTT_CONNECTED_BIT, pdFALSE, pdTRUE,
-                portMAX_DELAY);
+        EventBits_t bits = xEventGroupWaitBits(
+                event_group, CONNECTED_BITS, pdFALSE, pdTRUE, restart_on_errors_timeout_ticks);
+        if ((bits & CONNECTED_BITS) != CONNECTED_BITS) {
+            ESP_LOGE(TAG, "Connection cannot be established. Restart ...");
+            esp_restart();
+        }
 
         err = sensor_read_temperature(&sensor_handle, &temperature);
         if (err == ESP_OK) {

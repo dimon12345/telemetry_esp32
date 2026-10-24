@@ -19,20 +19,22 @@ static void request_retry_connect(wifi_handle_t *handle) {
     esp_err_t err = esp_timer_start_once(handle->connect_timer, delay_us);
     if (err == ESP_ERR_INVALID_STATE) {
         return;
-    } else if(err != ESP_OK) {
-        ESP_LOGE(TAG, "Timer start error: %s (0x%X)", esp_err_to_name(err), err);
+    } else if (err != ESP_OK) {
+        ESP_LOGE(
+                TAG, "Timer start error: %s (0x%X)", esp_err_to_name(err), err);
         return;
     }
 
-    int delay = atomic_load_explicit
-            (&handle->retry_delay, memory_order_relaxed);
+    int delay =
+            atomic_load_explicit(&handle->retry_delay, memory_order_relaxed);
     if (delay < WIFI_MAX_RETRY_DELAY_S) {
         delay *= 2;
         if (delay > WIFI_MAX_RETRY_DELAY_S) {
             delay = WIFI_MAX_RETRY_DELAY_S;
         }
 
-        atomic_store_explicit(&handle->retry_delay, delay, memory_order_relaxed);
+        atomic_store_explicit(
+                &handle->retry_delay, delay, memory_order_relaxed);
     }
 }
 
