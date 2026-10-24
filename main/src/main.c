@@ -67,8 +67,8 @@ void app_main(void) {
     float temperature = 0.f;
 
     for (;;) {
-        EventBits_t bits = xEventGroupWaitBits(
-                event_group, CONNECTED_BITS, pdFALSE, pdTRUE, restart_on_errors_timeout_ticks);
+        EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
+                pdFALSE, pdTRUE, restart_on_errors_timeout_ticks);
         if ((bits & CONNECTED_BITS) != CONNECTED_BITS) {
             ESP_LOGE(TAG, "Connection cannot be established. Restart ...");
             esp_restart();
