@@ -70,7 +70,7 @@ void app_main(void) {
         EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
                 pdFALSE, pdTRUE, restart_on_errors_timeout_ticks);
         if ((bits & CONNECTED_BITS) != CONNECTED_BITS) {
-            if (bits & MQTT_CONNECTED_BIT) {
+            if ((bits & MQTT_CONNECTED_BIT) == 0) {
                 ESP_LOGE(TAG, "No MQTT connection ...");
             } else {
                 ESP_LOGE(TAG, "No connection ...");
