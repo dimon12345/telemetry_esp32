@@ -1,6 +1,5 @@
 #include "mqtt.h"
 
-#include <stdatomic.h>
 #include <stdio.h>
 
 #include <esp_check.h>
