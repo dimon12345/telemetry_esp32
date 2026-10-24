@@ -92,7 +92,7 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
 
 esp_err_t wifi_init(wifi_handle_t *handle) {
     if (handle->connect_timer) {
-        return ESP_FAIL;
+        return ESP_ERR_INVALID_STATE;
     }
 
     atomic_store_explicit(
