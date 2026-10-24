@@ -28,8 +28,13 @@ static void mqtt_event_handler(
                         "Authorization error: Bad user or password "
                         "(Return code: %d)",
                         return_code);
+                break;
             }
         }
+
+        ESP_LOGE(TAG, "MQTT event error with type: %d and returncode: %d",
+                vent->error_handle->error_type,
+                event->error_handle->return_code);
         break;
 
     case MQTT_EVENT_CONNECTED:
