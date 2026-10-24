@@ -1,14 +1,14 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include <esp_event.h>
 #include <esp_log.h>
 #include <esp_netif.h>
 #include <esp_wifi.h>
-#include <freertos/idf_additions.h>
 #include <nvs_flash.h>
 
 #include "event_group_bits.h"
-#include "freertos/projdefs.h"
 #include "mqtt/mqtt.h"
-#include "portmacro.h"
 #include "sensor/ds18b20_sensor.h"
 #include "wifi/wifi.h"
 

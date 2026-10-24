@@ -4,7 +4,6 @@
 
 #include <esp_check.h>
 #include <esp_log.h>
-#include <freertos/idf_additions.h>
 
 #include "event_group_bits.h"
 
