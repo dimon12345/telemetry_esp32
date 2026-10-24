@@ -4,6 +4,7 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include <esp_netif.h>
+#include <esp_system.h>
 #include <esp_wifi.h>
 #include <nvs_flash.h>
 
@@ -13,6 +14,8 @@
 #include "wifi/wifi.h"
 
 static const char *TAG = "MAIN";
+
+const uint32_t TIME_30_MINUTES = pdMS_TO_TICKS(30 * 60 * 1000);
 
 void app_main(void) {
     ESP_LOGI(TAG, "Start");
@@ -61,14 +64,11 @@ void app_main(void) {
     ESP_LOGI(TAG, "All ready!");
 
     TickType_t no_error_time = xTaskGetTickCount();
-    TickType_t restart_on_errors_timeout_ticks =
-            pdMS_TO_TICKS(30 * 60 * 1000); // 30 min
-
     float temperature = 0.f;
 
     for (;;) {
-        EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
-                pdFALSE, pdTRUE, restart_on_errors_timeout_ticks);
+        EventBits_t bits = xEventGroupWaitBits(
+                event_group, CONNECTED_BITS, pdFALSE, pdTRUE, TIME_30_MINUTES);
         if ((bits & CONNECTED_BITS) != CONNECTED_BITS) {
             if ((bits & MQTT_CONNECTED_BIT) == 0) {
                 ESP_LOGE(TAG, "No MQTT connection ...");
@@ -94,8 +94,7 @@ void app_main(void) {
         }
 
         if (err != ESP_OK) {
-            if ((xTaskGetTickCount() - no_error_time) >=
-                    restart_on_errors_timeout_ticks) {
+            if ((xTaskGetTickCount() - no_error_time) >= TIME_30_MINUTES) {
                 ESP_LOGE(TAG, "Can't recovery from errors. Restart ...");
                 esp_restart();
             }
