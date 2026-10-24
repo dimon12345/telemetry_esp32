@@ -1,6 +1,6 @@
 #include "wifi.h"
-#include "esp_system.h"
 
+#include <stdatomic.h>
 #include <stddef.h>
 
 #include <esp_check.h>
@@ -9,9 +9,8 @@
 
 #include "event_group_bits.h"
 
-#define WIFI_DELAY_TRESHOLD_S 60
+#define WIFI_MAX_RETRY_DELAY_S 60
 #define WIFI_MIN_RETRY_DELAY_S 1
-#define WIFI_RETRY_BACKOFF_INCREMENT 10
 
 static const char *TAG = "WIFI";
 
@@ -20,12 +19,20 @@ static void request_retry_connect(wifi_handle_t *handle) {
     esp_err_t err = esp_timer_start_once(handle->connect_timer, delay_us);
     if (err == ESP_ERR_INVALID_STATE) {
         return;
+    } else if(err != ESP_OK) {
+        ESP_LOGE(TAG, "Timer start error: %s (0x%X)", esp_err_to_name(err), err);
+        return;
     }
 
-    if (atomic_load_explicit(&handle->retry_delay, memory_order_relaxed) <
-            WIFI_DELAY_TRESHOLD_S) {
-        atomic_fetch_add_explicit(&handle->retry_delay,
-                WIFI_RETRY_BACKOFF_INCREMENT, memory_order_relaxed);
+    int delay = atomic_load_explicit
+            (&handle->retry_delay, memory_order_relaxed);
+    if (delay < WIFI_MAX_RETRY_DELAY_S) {
+        delay *= 2;
+        if (delay > WIFI_MAX_RETRY_DELAY_S) {
+            delay = WIFI_MAX_RETRY_DELAY_S;
+        }
+
+        atomic_store_explicit(&handle->retry_delay, delay, memory_order_relaxed);
     }
 }
 
