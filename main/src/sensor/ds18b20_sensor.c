@@ -8,6 +8,8 @@
 static const char *TAG = "SENSOR";
 
 esp_err_t sensor_init(sensor_handle_t *handle) {
+    TRY_ASSERT(handle != NULL);
+
     onewire_bus_config_t bus_config = {
             .bus_gpio_num = CONFIG_TELEMETRY_SENSOR_GPIO};
     onewire_bus_rmt_config_t rmt_config = {
@@ -57,6 +59,9 @@ cleanup:
 }
 
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
+    TRY_ASSERT(handle != NULL);
+    TRY_ASSERT(temperature != NULL);
+
     if (!handle->sensor_ready) {
         ESP_RETURN_ON_ERROR(sensor_init(handle), TAG, "Sensor init error");
     }

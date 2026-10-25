@@ -3,6 +3,7 @@
 #include <stdatomic.h>
 #include <stddef.h>
 
+#include <esp_assert.h>
 #include <esp_check.h>
 #include <esp_log.h>
 
@@ -18,6 +19,8 @@ _Static_assert(sizeof(CONFIG_TELEMETRY_WIFI_PASSWORD) > 1, "Wi-Fi password is em
 
 
 static void request_retry_connect(wifi_handle_t *handle) {
+    TRY_ASSERT(handle != NULL);
+
     uint64_t delay_us = (uint64_t)handle->retry_delay * 1000 * 1000;
     esp_err_t err = esp_timer_start_once(handle->connect_timer, delay_us);
     if (err == ESP_ERR_INVALID_STATE) {
@@ -42,6 +45,8 @@ static void request_retry_connect(wifi_handle_t *handle) {
 }
 
 static void wifi_try_connect(wifi_handle_t *handle) {
+    TRY_ASSERT(handle != NULL);
+
     esp_err_t err = esp_wifi_connect();
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Wi-Fi connect error: %s (0x%X)", esp_err_to_name(err),
@@ -51,12 +56,16 @@ static void wifi_try_connect(wifi_handle_t *handle) {
 }
 
 static void timer_wifi_connect_cb(void *arg) {
+    TRY_ASSERT(arg != NULL);
+
     wifi_handle_t *handle = (wifi_handle_t *)arg;
     wifi_try_connect(handle);
 }
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         int32_t event_id, void *event_data) {
+    TRY_ASSERT(arg != NULL);
+
     wifi_handle_t *handle = (wifi_handle_t *)arg;
     switch (event_id) {
     case WIFI_EVENT_STA_START:
@@ -89,6 +98,8 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
         int32_t event_id, void *event_data) {
+    TRY_ASSERT(arg != NULL);
+
     wifi_handle_t *handle = (wifi_handle_t *)arg;
     xEventGroupSetBits(handle->event_group, WIFI_CONNECTED_BIT);
     atomic_store_explicit(
@@ -96,6 +107,8 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 esp_err_t wifi_init(wifi_handle_t *handle) {
+    TRY_ASSERT(handle != NULL);
+
     if (handle->connect_timer) {
         return ESP_ERR_INVALID_STATE;
     }
