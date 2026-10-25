@@ -33,8 +33,8 @@ static void mqtt_event_handler(
         }
 
         ESP_LOGE(TAG, "MQTT event error with type: %d and returncode: %d",
-                vent->error_handle->error_type,
-                event->error_handle->return_code);
+                event->error_handle->error_type,
+                event->error_handle->connect_return_code);
         break;
 
     case MQTT_EVENT_CONNECTED:
