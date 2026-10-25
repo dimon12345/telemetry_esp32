@@ -33,9 +33,9 @@ menu "Telemetry"
                 MQTT broker URI
 
         config TELEMETRY_MQTT_USERNAME
-            string "MQTT Username"
+            string "MQTT username"
             help
-                MQTT user
+                MQTT username
 
         config TELEMETRY_MQTT_PASSWORD
             string "MQTT Password"

@@ -10,6 +10,9 @@
 #define MQTT_QOS 0
 static const char *TAG = "MQTT";
 
+_Static_assert(sizeof(CONFIG_TELEMETRY_MQTT_USERNAME) > 1, "MQTT username is empty");
+_Static_assert(sizeof(CONFIG_TELEMETRY_MQTT_PASSWORD) > 1, "MQTT password is empty");
+
 static void mqtt_event_handler(
         void *arg, esp_event_base_t base, int32_t event_id, void *event_data) {
     esp_mqtt_event_handle_t event = event_data;

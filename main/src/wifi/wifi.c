@@ -13,6 +13,10 @@
 
 static const char *TAG = "WIFI";
 
+_Static_assert(sizeof(CONFIG_TELEMETRY_WIFI_SSID) > 1, "Wi-Fi SSID is empty");
+_Static_assert(sizeof(CONFIG_TELEMETRY_WIFI_PASSWORD) > 1, "Wi-Fi password is empty");
+
+
 static void request_retry_connect(wifi_handle_t *handle) {
     uint64_t delay_us = (uint64_t)handle->retry_delay * 1000 * 1000;
     esp_err_t err = esp_timer_start_once(handle->connect_timer, delay_us);
