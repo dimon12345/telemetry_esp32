@@ -72,6 +72,7 @@ void app_main(void) {
             } else {
                 ESP_LOGE(TAG, "No connection ...");
             }
+            no_error_time = xTaskGetTickCount();
             continue;
         }
 
