@@ -57,7 +57,7 @@ void app_main(void) {
     for(;;) {
         EventBits_t bits = xEventGroupWaitBits(
             event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, TIME_30_MINUTES);
-        if (bits | WIFI_CONNECTED_BIT) {
+        if (bits & WIFI_CONNECTED_BIT) {
             break;
         }
         ESP_LOGE(TAG, "Wi-Fi connect timeout.");
