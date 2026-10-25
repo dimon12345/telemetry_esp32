@@ -62,6 +62,7 @@ void app_main(void) {
 
     TickType_t no_error_time = xTaskGetTickCount();
     float temperature = 0.f;
+    err = ESP_OK;
 
     for (;;) {
         EventBits_t bits = xEventGroupWaitBits(
@@ -74,6 +75,10 @@ void app_main(void) {
             }
             no_error_time = xTaskGetTickCount();
             continue;
+        }
+
+        if (err == ESP_OK) {
+            no_error_time = xTaskGetTickCount();
         }
 
         err = sensor_read_temperature(&sensor_handle, &temperature);
