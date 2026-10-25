@@ -68,10 +68,10 @@ void app_main(void) {
         EventBits_t bits = xEventGroupWaitBits(
                 event_group, CONNECTED_BITS, pdFALSE, pdTRUE, TIME_30_MINUTES);
         if ((bits & CONNECTED_BITS) != CONNECTED_BITS) {
-            if ((bits & MQTT_CONNECTED_BIT) == 0) {
-                ESP_LOGE(TAG, "No MQTT connection ...");
+            if ((bits & WIFI_CONNECTED_BIT) == 0) {
+                ESP_LOGE(TAG, "No Wi-Fi connection ...");
             } else {
-                ESP_LOGE(TAG, "No connection ...");
+                ESP_LOGE(TAG, "No MQTT connection ...");
             }
             no_error_time = xTaskGetTickCount();
             continue;
