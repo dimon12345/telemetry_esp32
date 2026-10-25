@@ -3,14 +3,15 @@
 #include <esp_check.h>
 #include <sdkconfig.h>
 
-#define DS18B20_SCRATCHPAD_SIZE 10
+// 1 byte ROM command + 8 byte ROM number + 1 byte device command
+#define DS18B20_MAX_RX_BYTES 10
 static const char *TAG = "SENSOR";
 
 esp_err_t sensor_init(sensor_handle_t *handle) {
     onewire_bus_config_t bus_config = {
             .bus_gpio_num = CONFIG_TELEMETRY_SENSOR_GPIO};
     onewire_bus_rmt_config_t rmt_config = {
-            .max_rx_bytes = DS18B20_SCRATCHPAD_SIZE};
+            .max_rx_bytes = DS18B20_MAX_RX_BYTES};
 
     esp_err_t ret = ESP_OK;
     onewire_device_iter_handle_t iter = NULL;
