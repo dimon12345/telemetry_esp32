@@ -54,9 +54,9 @@ void app_main(void) {
 
     ESP_ERROR_CHECK(wifi_init(&wifi_handle));
 
-    for(;;) {
-        EventBits_t bits = xEventGroupWaitBits(
-            event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, TIME_30_MINUTES);
+    for (;;) {
+        EventBits_t bits = xEventGroupWaitBits(event_group, WIFI_CONNECTED_BIT,
+                pdFALSE, pdTRUE, TIME_30_MINUTES);
         if (bits & WIFI_CONNECTED_BIT) {
             break;
         }
