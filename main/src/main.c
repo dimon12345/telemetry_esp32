@@ -15,7 +15,7 @@
 
 static const char *TAG = "MAIN";
 
-const uint32_t TIME_30_MINUTES = pdMS_TO_TICKS(30 * 60 * 1000);
+static const uint32_t TIME_30_MINUTES = pdMS_TO_TICKS(30 * 60 * 1000);
 
 void app_main(void) {
     ESP_LOGI(TAG, "Start");
