@@ -7,11 +7,11 @@ menu "Telemetry"
             GPIO pin number with the sensor connected
 
     config TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL
-        int "Send sensor message time interval"
+        int "Send sensor message time interval (seconds)"
         default 60
         range 1 86400
         help
-            Time interval for sending sensor messages
+            Time interval for sending sensor messages (seconds)
 
     menu "Wi-Fi Settings"
         config TELEMETRY_WIFI_SSID
