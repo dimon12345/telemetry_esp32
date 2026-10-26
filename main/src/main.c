@@ -82,12 +82,13 @@ void app_main(void) {
 
     for (;;) {
         err = ESP_OK;
+        TickType_t now = xTaskGetTickCount();
         if (send_timeout_ticks > 0ULL) {
-            uint32_t td_ticks = xTaskGetTickCount() - last_time_ticks;
-            last_time_ticks = xTaskGetTickCount();
-            send_timeout_ticks = (uint64_t)td_ticks >= send_timeout_ticks
+            uint32_t elapsed = now - last_time_ticks;
+            last_time_ticks = now;
+            send_timeout_ticks = (uint64_t)elapsed >= send_timeout_ticks
                     ? 0ULL
-                    : send_timeout_ticks - (uint64_t)td_ticks;
+                    : send_timeout_ticks - (uint64_t)elapsed;
         }
 
         EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
@@ -105,7 +106,7 @@ void app_main(void) {
                 if (err == ESP_OK) {
                     ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
                     send_timeout_ticks = SENSOR_INTERVAL_TICKS;
-                    last_time_ticks = xTaskGetTickCount();
+                    last_time_ticks = now;
                 } else {
                     ESP_LOGE(TAG, "MQTT send temperature error: %s (0x%X)",
                             esp_err_to_name(err), err);
@@ -119,9 +120,8 @@ void app_main(void) {
         if (err == ESP_OK) {
             first_error_time = 0;
         } else if (first_error_time == 0) {
-            first_error_time = xTaskGetTickCount();
-        } else if ((xTaskGetTickCount() - first_error_time) >=
-                RESTART_ON_ERROR_TIME_TICKS) {
+            first_error_time = now;
+        } else if ((now - first_error_time) >= RESTART_ON_ERROR_TIME_TICKS) {
             ESP_LOGE(TAG, "Can't recover from errors. Restart ...");
             esp_restart();
         }
