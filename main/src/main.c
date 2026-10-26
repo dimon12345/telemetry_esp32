@@ -66,6 +66,9 @@ void app_main(void) {
             .restart_on_error_ticks = RESTART_ON_ERROR_TIME_TICKS};
     ESP_ERROR_CHECK(mqtt_init(&mqtt_handle));
 
+    // Sensor
+    sensor_handle_t sensor_handle = {0};
+
     ESP_LOGI(TAG, "All ready!");
 
     TickType_t first_error_time = 0;
