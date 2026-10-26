@@ -30,6 +30,8 @@ static const uint32_t RESTART_ON_ERROR_TIME_TICKS =
 static const uint64_t SENSOR_INTERVAL_TICKS =
         (uint64_t)CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL *
         (uint64_t)pdMS_TO_TICKS(1000U);
+static const uint32_t SENSOR_MAX_ERROR_BACKOFF_INTERVAL =
+        pdMS_TO_TICKS(60U * 1000U);
 
 void app_main(void) {
     ESP_LOGI(TAG, "Start");
@@ -77,8 +79,11 @@ void app_main(void) {
     TickType_t first_error_time = 0;
     float temperature = 0.f;
 
-    uint64_t send_timeout_ticks = 0ULL;
     uint32_t last_time_ticks = 0U;
+
+    uint64_t send_timeout_ticks = 0ULL;
+    uint64_t sensor_error_backoff_ticks = 0ULL;
+    uint64_t sensor_error_backoff_interval_ticks = 1ULL;
 
     for (;;) {
         err = ESP_OK;
@@ -100,9 +105,17 @@ void app_main(void) {
             send_timeout_ticks = (uint64_t)elapsed >= send_timeout_ticks
                     ? 0ULL
                     : send_timeout_ticks - (uint64_t)elapsed;
+
+            if (sensor_error_backoff_ticks > 0) {
+                sensor_error_backoff_ticks =
+                        (uint64_t)elapsed >= sensor_error_backoff_ticks
+                        ? 0ULL
+                        : sensor_error_backoff_ticks - (uint64_t)elapsed;
+            }
         }
 
-        if (err == ESP_OK && send_timeout_ticks == 0) {
+        if (err == ESP_OK && send_timeout_ticks == 0 &&
+                sensor_error_backoff_ticks == 0) {
             err = sensor_read_temperature(&sensor_handle, &temperature);
             if (err == ESP_OK) {
                 err = mqtt_send_temperature(&mqtt_handle, temperature);
@@ -117,6 +130,17 @@ void app_main(void) {
             } else {
                 ESP_LOGE(TAG, "Read sensor error: %s (0x%X)",
                         esp_err_to_name(err), err);
+            }
+
+            if (err != ESP_OK) {
+                sensor_error_backoff_ticks =
+                        sensor_error_backoff_interval_ticks;
+                sensor_error_backoff_interval_ticks *= 2;
+                if (sensor_error_backoff_interval_ticks >
+                        SENSOR_MAX_ERROR_BACKOFF_INTERVAL) {
+                    sensor_error_backoff_interval_ticks =
+                            SENSOR_MAX_ERROR_BACKOFF_INTERVAL;
+                }
             }
         }
 
