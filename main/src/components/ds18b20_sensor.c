@@ -71,8 +71,8 @@ esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
 
     esp_err_t wdt_err = esp_task_wdt_add(NULL);
     if (wdt_err != ESP_OK) {
-        ESP_LOGE(TAG, "WDT task add error: %s (0x%X)",
-                    esp_err_to_name(wdt_err), wdt_err);
+        ESP_LOGE(TAG, "WDT task add error: %s (0x%X)", esp_err_to_name(wdt_err),
+                wdt_err);
     }
 
     esp_err_t err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
