@@ -74,7 +74,6 @@ void app_main(void) {
     ESP_LOGI(TAG, "All ready!");
 
     TickType_t first_error_time = 0;
-    float temperature = 0.f;
 
     uint32_t last_time_ticks = 0U;
 
@@ -94,6 +93,8 @@ void app_main(void) {
         } else if ((bits & MQTT_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No MQTT connection ...");
             err = ESP_ERR_INVALID_STATE;
+            send_timeout_ticks = 0ULL;
+            sensor_error_backoff_ticks = 0ULL;
         }
 
         TickType_t now = xTaskGetTickCount();
@@ -119,6 +120,7 @@ void app_main(void) {
 
         if (err == ESP_OK && send_timeout_ticks == 0 &&
                 sensor_error_backoff_ticks == 0) {
+            float temperature = 0.f;
             err = sensor_read_temperature(&sensor_handle, &temperature);
             if (err == ESP_OK) {
                 err = mqtt_send_temperature(&mqtt_handle, temperature);
