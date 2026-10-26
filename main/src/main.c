@@ -104,7 +104,7 @@ void app_main(void) {
             no_error_time = xTaskGetTickCount();
         } else if ((xTaskGetTickCount() - no_error_time) >=
                 RESTART_ON_ERROR_TIME_TICKS) {
-            ESP_LOGE(TAG, "Can't recovery from errors. Restart ...");
+            ESP_LOGE(TAG, "Can't recover from errors. Restart ...");
             esp_restart();
         }
 
