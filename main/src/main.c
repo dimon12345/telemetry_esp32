@@ -1,3 +1,4 @@
+#include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -83,7 +84,7 @@ void app_main(void) {
             } else {
                 ESP_LOGE(TAG, "No MQTT connection ...");
             }
-            err = ESP_FAIL;
+            err = ESP_ERR_INVALID_STATE;
         } else {
             err = sensor_read_temperature(&sensor_handle, &temperature);
             if (err == ESP_OK) {
