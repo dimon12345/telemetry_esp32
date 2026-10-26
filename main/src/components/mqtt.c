@@ -42,6 +42,11 @@ static void mqtt_event_handler(
             if (socket_error != 0) {
                 ESP_LOGE(TAG, "Socket error: %d", socket_error);
             }
+
+            if (tls_last_error == ESP_OK && socket_error == 0) {
+                ESP_LOGE(TAG, "TCP transport error");
+            }
+
             break;
         case MQTT_ERROR_TYPE_CONNECTION_REFUSED:
             esp_mqtt_connect_return_code_t return_code =
