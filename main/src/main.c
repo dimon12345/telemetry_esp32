@@ -108,6 +108,7 @@ void app_main(void) {
                 if (err == ESP_OK) {
                     ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
                     send_timeout_ticks = SENSOR_INTERVAL_TICKS;
+                    last_time_ticks = xTaskGetTickCount();
                 } else {
                     ESP_LOGE(TAG, "MQTT send temperature error: %s (0x%X)",
                             esp_err_to_name(err), err);
