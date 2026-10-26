@@ -135,7 +135,8 @@ esp_err_t wifi_init(wifi_handle_t *handle) {
     wifi_config_t wifi_config = {
             .sta = {.ssid = CONFIG_TELEMETRY_WIFI_SSID,
                     .password = CONFIG_TELEMETRY_WIFI_PASSWORD,
-                    .threshold.authmode = WIFI_AUTH_WPA2_PSK},
+                    .threshold.authmode = WIFI_AUTH_WPA_PSK,
+                    .sae_pwe_h2e = WPA3_SAE_PWE_BOTH},
     };
 
     ESP_RETURN_ON_ERROR(
