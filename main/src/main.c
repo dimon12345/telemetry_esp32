@@ -11,8 +11,8 @@
 
 #include "components/ds18b20_sensor.h"
 #include "components/mqtt.h"
-#include "components/wifi.h"
 #include "components/watchdog.h"
+#include "components/wifi.h"
 #include "event_group_bits.h"
 
 static const char *TAG = "MAIN";
@@ -72,7 +72,7 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "All ready!");
 
-    TickType_t no_error_time = xTaskGetTickCount();
+    TickType_t first_error_time = 0;
     float temperature = 0.f;
     err = ESP_OK;
 
@@ -103,14 +103,17 @@ void app_main(void) {
         }
 
         if (err == ESP_OK) {
-            no_error_time = xTaskGetTickCount();
-        } else if ((xTaskGetTickCount() - no_error_time) >=
+            first_error_time = 0;
+        } else if (first_error_time == 0) {
+            first_error_time = xTaskGetTickCount();
+        } else if ((xTaskGetTickCount() - first_error_time) >=
                 RESTART_ON_ERROR_TIME_TICKS) {
             ESP_LOGE(TAG, "Can't recover from errors. Restart ...");
             esp_restart();
         }
 
-        for (int i = 0; i < CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL; ++i) {
+        for (int i = 0; i < CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL;
+                ++i) {
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
