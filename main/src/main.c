@@ -58,7 +58,7 @@ void app_main(void) {
     ESP_ERROR_CHECK(wifi_init(&wifi_handle));
 
     EventBits_t bits = xEventGroupWaitBits(event_group, WIFI_CONNECTED_BIT,
-            pdFALSE, pdTRUE, TIME_30_MINUTES);
+            pdFALSE, pdTRUE, RESTART_ON_ERROR_TIME_TICKS);
 
     if ((bits & WIFI_CONNECTED_BIT) == 0) {
         ESP_LOGE(TAG, "Wi-Fi connect timeout. Restart");
@@ -81,7 +81,7 @@ void app_main(void) {
         if ((bits & WIFI_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No Wi-Fi connection ...");
             err = ESP_ERR_INVALID_STATE;
-        } else if (MQTT_CONNECTED_BIT) == 0) {
+        } else if ((bits & MQTT_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No MQTT connection ...");
             err = ESP_ERR_INVALID_STATE;
         } else {
