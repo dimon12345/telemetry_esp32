@@ -71,7 +71,27 @@ esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
     assert(temperature != NULL);
 
     if (!handle->sensor_ready) {
-        ESP_RETURN_ON_ERROR(sensor_init(handle), TAG, "Sensor init error");
+        esp_err_t wdt_err = esp_task_wdt_add(NULL);
+        if (wdt_err != ESP_OK) {
+            ESP_LOGE(TAG, "WDT task add error: %s (0x%X)",
+                    esp_err_to_name(wdt_err), wdt_err);
+        }
+
+        esp_err_t sensor_err = sensor_init(handle);
+
+        if (wdt_err == ESP_OK) {
+            wdt_err = esp_task_wdt_delete(NULL);
+            if (wdt_err != ESP_OK) {
+                ESP_LOGE(TAG, "WDT task delete error: %s (0x%X)",
+                        esp_err_to_name(wdt_err), wdt_err);
+            }
+        }
+
+        if (sensor_err != ESP_OK) {
+            ESP_LOGE(TAG, "Sensor init error: %s (0x%X)",
+                    esp_err_to_name(sensor_err), sensor_err);
+            return sensor_err;
+        }
     }
 
     esp_err_t wdt_err = esp_task_wdt_add(NULL);
