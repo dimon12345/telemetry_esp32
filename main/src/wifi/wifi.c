@@ -118,7 +118,7 @@ esp_err_t wifi_init(wifi_handle_t *handle) {
 
     const esp_timer_create_args_t once_timer_args = {
             .callback = &timer_wifi_connect_cb, .arg = handle};
-    ESP_ERROR_CHECK(esp_timer_create(&once_timer_args, &handle->connect_timer));
+    ESP_RETURN_ON_ERROR(esp_timer_create(&once_timer_args, &handle->connect_timer));
 
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
     ESP_RETURN_ON_ERROR(esp_wifi_init(&init_config), TAG, "Wi-Fi init error");
