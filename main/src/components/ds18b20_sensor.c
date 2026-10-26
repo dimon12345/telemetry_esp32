@@ -69,30 +69,7 @@ cleanup:
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
     assert(handle != NULL);
     assert(temperature != NULL);
-
-    if (!handle->sensor_ready) {
-        esp_err_t wdt_err = esp_task_wdt_add(NULL);
-        if (wdt_err != ESP_OK) {
-            ESP_LOGE(TAG, "WDT task add error: %s (0x%X)",
-                    esp_err_to_name(wdt_err), wdt_err);
-        }
-
-        esp_err_t sensor_err = sensor_init(handle);
-
-        if (wdt_err == ESP_OK) {
-            wdt_err = esp_task_wdt_delete(NULL);
-            if (wdt_err != ESP_OK) {
-                ESP_LOGE(TAG, "WDT task delete error: %s (0x%X)",
-                        esp_err_to_name(wdt_err), wdt_err);
-            }
-        }
-
-        if (sensor_err != ESP_OK) {
-            ESP_LOGE(TAG, "Sensor init error: %s (0x%X)",
-                    esp_err_to_name(sensor_err), sensor_err);
-            return sensor_err;
-        }
-    }
+    esp_err_t err = ESP_OK;
 
     esp_err_t wdt_err = esp_task_wdt_add(NULL);
     if (wdt_err != ESP_OK) {
@@ -100,21 +77,33 @@ esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
                 wdt_err);
     }
 
-    esp_err_t err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
+    if (!handle->sensor_ready) {
+        esp_err_t sensor_err = sensor_init(handle);
+        if (sensor_err != ESP_OK) {
+            ESP_LOGE(TAG, "Sensor init error: %s (0x%X)",
+                    esp_err_to_name(sensor_err), sensor_err);
+
+            err = sensor_err;
+            goto cleanup;
+        }
+    }
+
+    err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
     if (err == ESP_OK) {
         err = ds18b20_get_temperature(handle->device, temperature);
     }
 
+    if (err != ESP_OK) {
+        handle->sensor_ready = false;
+    }
+
+cleanup:
     if (wdt_err == ESP_OK) {
         wdt_err = esp_task_wdt_delete(NULL);
         if (wdt_err != ESP_OK) {
             ESP_LOGE(TAG, "WDT task delete error: %s (0x%X)",
                     esp_err_to_name(wdt_err), wdt_err);
         }
-    }
-
-    if (err != ESP_OK) {
-        handle->sensor_ready = false;
     }
 
     return err;
