@@ -82,34 +82,28 @@ void app_main(void) {
             } else {
                 ESP_LOGE(TAG, "No MQTT connection ...");
             }
-            no_error_time = xTaskGetTickCount();
-            continue;
-        }
-
-        if (err == ESP_OK) {
-            no_error_time = xTaskGetTickCount();
-        }
-
-        err = sensor_read_temperature(&sensor_handle, &temperature);
-        if (err == ESP_OK) {
-            err = mqtt_send_temperature(&mqtt_handle, temperature);
-            if (err == ESP_OK) {
-                no_error_time = xTaskGetTickCount();
-                ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
-            } else {
-                ESP_LOGE(TAG, "MQTT send temperature error: %s (0x%X)",
-                        esp_err_to_name(err), err);
-            }
+            err = ESP_FAIL;
         } else {
-            ESP_LOGE(TAG, "Read sensor error: %s (0x%X)", esp_err_to_name(err),
-                    err);
+            err = sensor_read_temperature(&sensor_handle, &temperature);
+            if (err == ESP_OK) {
+                err = mqtt_send_temperature(&mqtt_handle, temperature);
+                if (err == ESP_OK) {
+                    ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
+                } else {
+                    ESP_LOGE(TAG, "MQTT send temperature error: %s (0x%X)",
+                            esp_err_to_name(err), err);
+                }
+            } else {
+                ESP_LOGE(TAG, "Read sensor error: %s (0x%X)", esp_err_to_name(err),
+                        err);
+            }
         }
 
-        if (err != ESP_OK) {
-            if ((xTaskGetTickCount() - no_error_time) >= TIME_30_MINUTES) {
-                ESP_LOGE(TAG, "Can't recovery from errors. Restart ...");
-                esp_restart();
-            }
+        if (err == ESP_OK) {
+            no_error_time = xTaskGetTickCount();
+        } else if ((xTaskGetTickCount() - no_error_time) >= TIME_30_MINUTES) {
+            ESP_LOGE(TAG, "Can't recovery from errors. Restart ...");
+            esp_restart();
         }
 
         vTaskDelay(pdMS_TO_TICKS(
