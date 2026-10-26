@@ -85,12 +85,9 @@ void app_main(void) {
         if (send_timeout_ticks > 0ULL) {
             uint32_t td_ticks = xTaskGetTickCount() - last_time_ticks;
             last_time_ticks = xTaskGetTickCount();
-            if ((send_timeout_ticks - (uint64_t)td_ticks) >
-                    send_timeout_ticks) {
-                send_timeout_ticks = 0ULL;
-            } else {
-                send_timeout_ticks -= (uint64_t)td_ticks;
-            }
+            send_timeout_ticks = (uint64_t)td_ticks >= send_timeout_ticks
+                    ? 0ULL
+                    : send_timeout_ticks - (uint64_t)td_ticks;
         }
 
         EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
