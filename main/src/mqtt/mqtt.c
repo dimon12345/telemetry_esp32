@@ -1,6 +1,7 @@
 #include "mqtt.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 #include <esp_check.h>
 #include <esp_log.h>
@@ -15,7 +16,7 @@ _Static_assert(sizeof(CONFIG_TELEMETRY_MQTT_PASSWORD) > 1, "MQTT password is emp
 
 static void mqtt_event_handler(
         void *arg, esp_event_base_t base, int32_t event_id, void *event_data) {
-    TRY_ASSERT(arg != NULL);
+    assert(arg != NULL);
 
     esp_mqtt_event_handle_t event = event_data;
     mqtt_handle_t *handle = (mqtt_handle_t *)arg;
@@ -55,7 +56,7 @@ static void mqtt_event_handler(
 }
 
 esp_err_t mqtt_init(mqtt_handle_t *handle) {
-    TRY_ASSERT(handle != NULL);
+    assert(handle != NULL);
 
     esp_mqtt_client_config_t mqtt_cfg = {
             .broker.address.uri = CONFIG_TELEMETRY_MQTT_BROKER_URI,
@@ -80,7 +81,7 @@ esp_err_t mqtt_init(mqtt_handle_t *handle) {
 }
 
 esp_err_t mqtt_send_temperature(mqtt_handle_t *handle, float temperature) {
-    TRY_ASSERT(handle != NULL);
+    assert(handle != NULL);
 
     EventBits_t bits = xEventGroupGetBits(handle->event_group);
     if ((bits & MQTT_CONNECTED_BIT) == 0) {
