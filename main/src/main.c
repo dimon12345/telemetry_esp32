@@ -16,7 +16,9 @@
 
 static const char *TAG = "MAIN";
 
-static const uint32_t TIME_30_MINUTES = pdMS_TO_TICKS(30 * 60 * 1000);
+static const uint32_t RESTART_ON_ERROR_TIME_TICKS =
+        pdMS_TO_TICKS(30 * 60 * 1000);
+static const uint32_t WAIT_WIFI_TIME_TICKS = pdMS_TO_TICKS(60 * 1000);
 
 void app_main(void) {
     ESP_LOGI(TAG, "Start");
@@ -76,15 +78,10 @@ void app_main(void) {
     err = ESP_OK;
 
     for (;;) {
-        EventBits_t bits = xEventGroupWaitBits(
-                event_group, CONNECTED_BITS, pdFALSE, pdTRUE, TIME_30_MINUTES);
-        if ((bits & CONNECTED_BITS) != CONNECTED_BITS) {
-            if ((bits & WIFI_CONNECTED_BIT) == 0) {
-                ESP_LOGE(TAG, "No Wi-Fi connection ...");
-            } else {
-                ESP_LOGE(TAG, "No MQTT connection ...");
-            }
-            err = ESP_ERR_INVALID_STATE;
+        EventBits_t bits = xEventGroupWaitBits(event_group, WIFI_CONNECTED_BIT,
+                pdFALSE, pdTRUE, WAIT_WIFI_TIME_TICKS);
+        if ((bits & WIFI_CONNECTED_BIT) == 0) {
+            ESP_LOGE(TAG, "No Wi-Fi connection ...");
         } else {
             err = sensor_read_temperature(&sensor_handle, &temperature);
             if (err == ESP_OK) {
@@ -96,14 +93,15 @@ void app_main(void) {
                             esp_err_to_name(err), err);
                 }
             } else {
-                ESP_LOGE(TAG, "Read sensor error: %s (0x%X)", esp_err_to_name(err),
-                        err);
+                ESP_LOGE(TAG, "Read sensor error: %s (0x%X)",
+                        esp_err_to_name(err), err);
             }
         }
 
         if (err == ESP_OK) {
             no_error_time = xTaskGetTickCount();
-        } else if ((xTaskGetTickCount() - no_error_time) >= TIME_30_MINUTES) {
+        } else if ((xTaskGetTickCount() - no_error_time) >=
+                RESTART_ON_ERROR_TIME_TICKS) {
             ESP_LOGE(TAG, "Can't recovery from errors. Restart ...");
             esp_restart();
         }
