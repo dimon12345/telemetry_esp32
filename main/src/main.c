@@ -81,7 +81,6 @@ void app_main(void) {
     uint64_t sensor_error_backoff_ticks = 0ULL;
     uint64_t sensor_error_backoff_interval_ticks =
             SENSOR_ERROR_INITIAL_BACKOFF_TICKS;
-    bool connected = false;
 
     for (;;) {
         err = ESP_OK;
@@ -91,13 +90,14 @@ void app_main(void) {
         if ((bits & WIFI_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No Wi-Fi connection ...");
             err = ESP_ERR_INVALID_STATE;
-            connected = false;
         } else if ((bits & MQTT_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No MQTT connection ...");
             err = ESP_ERR_INVALID_STATE;
-            connected = false;
-        } else if (!connected) {
-            connected = true;
+        }
+
+        bits = xEventGroupGetBits(event_group);
+        if (bits & EMERGENCY_SEND_BIT) {
+            xEventGroupClearBits(event_group, EMERGENCY_SEND_BIT);
             send_timeout_ticks = 0ULL;
             sensor_error_backoff_ticks = 0ULL;
         }

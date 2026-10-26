@@ -70,7 +70,8 @@ static void mqtt_event_handler(
         break;
 
     case MQTT_EVENT_CONNECTED:
-        xEventGroupSetBits(handle->event_group, MQTT_CONNECTED_BIT);
+        xEventGroupSetBits(
+                handle->event_group, MQTT_CONNECTED_BIT | EMERGENCY_SEND_BIT);
         ESP_LOGI(TAG, "MQTT connected");
         break;
     case MQTT_EVENT_DISCONNECTED:
