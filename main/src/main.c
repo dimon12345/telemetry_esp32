@@ -110,7 +110,8 @@ void app_main(void) {
             esp_restart();
         }
 
-        vTaskDelay(pdMS_TO_TICKS(
-                1000 * CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL));
+        for (int i = 0; i < CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL; ++i) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
     }
 }
