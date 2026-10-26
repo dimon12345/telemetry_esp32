@@ -93,6 +93,7 @@ void app_main(void) {
         } else if ((bits & MQTT_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No MQTT connection ...");
             err = ESP_ERR_INVALID_STATE;
+        } else {
             send_timeout_ticks = 0ULL;
             sensor_error_backoff_ticks = 0ULL;
         }
