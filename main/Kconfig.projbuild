@@ -1,10 +1,10 @@
 menu "Telemetry"
     config TELEMETRY_SENSOR_GPIO
-        int "Sensor GPIO"
+        int "Sensor GPIO pin. Must support input/output."
         default 22
         range 0 33
         help
-            GPIO pin number with the sensor connected
+            Sensor GPIO pin. Must support input/output.
 
     config TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL
         int "Send sensor message time interval (seconds)"
