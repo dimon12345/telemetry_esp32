@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include <esp_check.h>
+#include <esp_task_wdt.h>
 #include <sdkconfig.h>
 
 // 1 byte ROM command + 8 byte ROM number + 1 byte device command
@@ -68,10 +69,16 @@ esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
         ESP_RETURN_ON_ERROR(sensor_init(handle), TAG, "Sensor init error");
     }
 
-    esp_err_t err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
+    esp_err_t err = esp_task_wdt_add(NULL);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "WDT task add error.");
+    }
+
+    err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
     if (err == ESP_OK) {
         err = ds18b20_get_temperature(handle->device, temperature);
     }
+    esp_task_wdt_delete(NULL);
 
     if (err != ESP_OK) {
         handle->sensor_ready = false;

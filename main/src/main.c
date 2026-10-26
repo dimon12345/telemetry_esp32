@@ -14,19 +14,17 @@
 
 #include "components/ds18b20_sensor.h"
 #include "components/mqtt.h"
-#include "components/watchdog.h"
 #include "components/wifi.h"
 #include "event_group_bits.h"
 
 static const char *TAG = "MAIN";
 
 static const uint32_t WAIT_CONNECT_TIME_MS = 60U * 1000U;
-static const TickType_t WAIT_CONNECT_TIME_TICKS = pdMS_TO_TICKS(60U * 1000U);
+static const TickType_t WAIT_CONNECT_TIME_TICKS =
+        pdMS_TO_TICKS(WAIT_CONNECT_TIME_MS);
 static const uint32_t MAIN_LOOP_DELAY_MS = 1000U;
 static const TickType_t MAIN_LOOP_DELAY_TICKS =
         pdMS_TO_TICKS(MAIN_LOOP_DELAY_MS);
-static const uint32_t WDT_TIMEOUT_MS =
-        2U * (WAIT_CONNECT_TIME_MS + MAIN_LOOP_DELAY_MS);
 static const uint32_t RESTART_ON_ERROR_TIME_TICKS =
         pdMS_TO_TICKS(30U * 60U * 1000U);
 static const uint64_t SENSOR_INTERVAL_TICKS =
@@ -74,9 +72,6 @@ void app_main(void) {
             .restart_on_error_ticks = RESTART_ON_ERROR_TIME_TICKS};
     ESP_ERROR_CHECK(mqtt_init(&mqtt_handle));
 
-    // Watchdog timer
-    watchdog_init(WDT_TIMEOUT_MS);
-
     ESP_LOGI(TAG, "All ready!");
 
     TickType_t first_error_time = 0;
@@ -98,7 +93,6 @@ void app_main(void) {
             }
         }
 
-        watchdog_feed();
         EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
                 pdFALSE, pdTRUE, WAIT_CONNECT_TIME_TICKS);
         if ((bits & WIFI_CONNECTED_BIT) == 0) {

@@ -1,7 +1,6 @@
 set(TELEMETRY_SOURCES
     src/components/ds18b20_sensor.c
     src/components/mqtt.c
-    src/components/watchdog.c
     src/components/wifi.c
     src/main.c
 )
