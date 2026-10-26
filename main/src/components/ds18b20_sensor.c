@@ -6,9 +6,15 @@
 #include <esp_task_wdt.h>
 #include <sdkconfig.h>
 
+#include <driver/gpio.h>
+
 // 1 byte ROM command + 8 byte ROM number + 1 byte device command
 #define DS18B20_MAX_RX_BYTES 10
 static const char *TAG = "SENSOR";
+
+_Static_assert(GPIO_IS_VALID_OUTPUT_GPIO(CONFIG_TELEMETRY_SENSOR_GPIO),
+        ESP_ERR_INAVALID_ARG, TAG, "Invalid sensor GPIO: %d",
+        CONFIG_TELEMETRY_SENSOR_GPIO);
 
 esp_err_t sensor_init(sensor_handle_t *handle) {
     assert(handle != NULL);

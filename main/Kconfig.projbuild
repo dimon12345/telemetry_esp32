@@ -2,7 +2,7 @@ menu "Telemetry"
     config TELEMETRY_SENSOR_GPIO
         int "Sensor GPIO"
         default 22
-        range 0 23
+        range 0 33
         help
             GPIO pin number with the sensor connected
 
