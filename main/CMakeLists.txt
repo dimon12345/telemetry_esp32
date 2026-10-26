@@ -1,10 +1,11 @@
 set(TELEMETRY_SOURCES
-    src/main.c
-    src/sensor/ds18b20_sensor.c
-    src/wifi/wifi.c
-    src/mqtt/mqtt.c
+    src/components/ds18b20_sensor.c
+    src/components/mqtt.c
     src/components/watchdog.c
+    src/components/wifi.c
+    src/main.c
 )
+
 set(TELEMETRY_HEADERS
     src/
 )

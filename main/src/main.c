@@ -1,7 +1,7 @@
-#include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include <esp_err.h>
 #include <esp_event.h>
 #include <esp_log.h>
 #include <esp_netif.h>
@@ -9,11 +9,11 @@
 #include <esp_wifi.h>
 #include <nvs_flash.h>
 
+#include "components/ds18b20_sensor.h"
+#include "components/mqtt.h"
+#include "components/wifi.h"
 #include "components/watchdog.h"
 #include "event_group_bits.h"
-#include "mqtt/mqtt.h"
-#include "sensor/ds18b20_sensor.h"
-#include "wifi/wifi.h"
 
 static const char *TAG = "MAIN";
 
