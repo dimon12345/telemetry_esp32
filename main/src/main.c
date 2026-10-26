@@ -60,7 +60,8 @@ void app_main(void) {
         if (bits & WIFI_CONNECTED_BIT) {
             break;
         }
-        ESP_LOGE(TAG, "Wi-Fi connect timeout.");
+        ESP_LOGE(TAG, "Wi-Fi connect timeout. Restart");
+        esp_restart();
     }
 
     // MQTT
