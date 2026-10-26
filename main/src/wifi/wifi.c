@@ -1,8 +1,8 @@
 #include "wifi.h"
 
+#include <assert.h>
 #include <stdatomic.h>
 #include <stddef.h>
-#include <assert.h>
 
 #include <esp_check.h>
 #include <esp_log.h>
@@ -15,8 +15,8 @@
 static const char *TAG = "WIFI";
 
 _Static_assert(sizeof(CONFIG_TELEMETRY_WIFI_SSID) > 1, "Wi-Fi SSID is empty");
-_Static_assert(sizeof(CONFIG_TELEMETRY_WIFI_PASSWORD) > 1, "Wi-Fi password is empty");
-
+_Static_assert(
+        sizeof(CONFIG_TELEMETRY_WIFI_PASSWORD) > 1, "Wi-Fi password is empty");
 
 static void request_retry_connect(wifi_handle_t *handle) {
     assert(handle != NULL);
