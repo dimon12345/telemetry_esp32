@@ -139,6 +139,8 @@ void app_main(void) {
             }
 
             if (err != ESP_OK) {
+                // Errors can take long time
+                last_time_ticks = xTaskGetTickCount();
                 sensor_error_backoff_ticks =
                         sensor_error_backoff_interval_ticks;
                 sensor_error_backoff_interval_ticks *= 2;
