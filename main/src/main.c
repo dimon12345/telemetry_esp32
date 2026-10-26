@@ -57,12 +57,10 @@ void app_main(void) {
 
     ESP_ERROR_CHECK(wifi_init(&wifi_handle));
 
-    for (;;) {
-        EventBits_t bits = xEventGroupWaitBits(event_group, WIFI_CONNECTED_BIT,
-                pdFALSE, pdTRUE, TIME_30_MINUTES);
-        if (bits & WIFI_CONNECTED_BIT) {
-            break;
-        }
+    EventBits_t bits = xEventGroupWaitBits(event_group, WIFI_CONNECTED_BIT,
+            pdFALSE, pdTRUE, TIME_30_MINUTES);
+
+    if ((bits & WIFI_CONNECTED_BIT) == 0) {
         ESP_LOGE(TAG, "Wi-Fi connect timeout. Restart");
         esp_restart();
     }
@@ -78,10 +76,14 @@ void app_main(void) {
     err = ESP_OK;
 
     for (;;) {
-        EventBits_t bits = xEventGroupWaitBits(event_group, WIFI_CONNECTED_BIT,
+        EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
                 pdFALSE, pdTRUE, WAIT_WIFI_TIME_TICKS);
         if ((bits & WIFI_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No Wi-Fi connection ...");
+            err = ESP_ERR_INVALID_STATE;
+        } else if (MQTT_CONNECTED_BIT) == 0) {
+            ESP_LOGE(TAG, "No MQTT connection ...");
+            err = ESP_ERR_INVALID_STATE;
         } else {
             err = sensor_read_temperature(&sensor_handle, &temperature);
             if (err == ESP_OK) {
