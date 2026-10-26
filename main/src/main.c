@@ -98,19 +98,24 @@ void app_main(void) {
             err = ESP_ERR_INVALID_STATE;
         }
 
+        TickType_t now = xTaskGetTickCount();
+        uint32_t elapsed = now - last_time_ticks;
+        last_time_ticks = now;
+
         if (send_timeout_ticks > 0ULL) {
-            TickType_t now = xTaskGetTickCount();
-            uint32_t elapsed = now - last_time_ticks;
-            last_time_ticks = now;
             send_timeout_ticks = (uint64_t)elapsed >= send_timeout_ticks
                     ? 0ULL
                     : send_timeout_ticks - (uint64_t)elapsed;
+        }
+
+        if (sensor_error_backoff_ticks > 0ULL) {
+            sensor_error_backoff_ticks =
+                    (uint64_t)elapsed >= sensor_error_backoff_ticks
+                    ? 0ULL
+                    : sensor_error_backoff_ticks - (uint64_t)elapsed;
 
             if (sensor_error_backoff_ticks > 0) {
-                sensor_error_backoff_ticks =
-                        (uint64_t)elapsed >= sensor_error_backoff_ticks
-                        ? 0ULL
-                        : sensor_error_backoff_ticks - (uint64_t)elapsed;
+                err = ESP_ERR_INVALID_STATE;
             }
         }
 
