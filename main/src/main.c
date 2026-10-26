@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -8,6 +10,7 @@
 #include <esp_system.h>
 #include <esp_wifi.h>
 #include <nvs_flash.h>
+#include <portmacro.h>
 
 #include "components/ds18b20_sensor.h"
 #include "components/mqtt.h"
@@ -19,12 +22,16 @@ static const char *TAG = "MAIN";
 
 static const uint32_t WAIT_CONNECT_TIME_MS = 60U * 1000U;
 static const TickType_t WAIT_CONNECT_TIME_TICKS = pdMS_TO_TICKS(60U * 1000U);
-static const uint32_t SENSOR_INTERVAL_MS =
-        1000U * CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL;
+static const uint32_t MAIN_LOOP_DELAY_MS = 1000U;
+static const TickType_t MAIN_LOOP_DELAY_TICKS =
+        pdMS_TO_TICKS(MAIN_LOOP_DELAY_MS);
 static const uint32_t WDT_TIMEOUT_MS =
-        2U * (WAIT_CONNECT_TIME_MS + SENSOR_INTERVAL_MS);
+        2U * (WAIT_CONNECT_TIME_MS + MAIN_LOOP_DELAY_MS);
 static const uint32_t RESTART_ON_ERROR_TIME_TICKS =
-        pdMS_TO_TICKS(30 * 60 * 1000);
+        pdMS_TO_TICKS(30U * 60U * 1000U);
+static const uint64_t SENSOR_INTERVAL_TICKS =
+        (uint64_t)CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL *
+        (uint64_t)pdMS_TO_TICKS(1000U);
 
 void app_main(void) {
     ESP_LOGI(TAG, "Start");
@@ -74,9 +81,23 @@ void app_main(void) {
 
     TickType_t first_error_time = 0;
     float temperature = 0.f;
-    err = ESP_OK;
+
+    uint64_t send_timeout_ticks = 0ULL;
+    uint32_t last_time_ticks = 0U;
 
     for (;;) {
+        err = ESP_OK;
+        if (send_timeout_ticks > 0ULL) {
+            uint32_t td_ticks = xTaskGetTickCount() - last_time_ticks;
+            last_time_ticks = xTaskGetTickCount();
+            if ((send_timeout_ticks - (uint64_t)td_ticks) >
+                    send_timeout_ticks) {
+                send_timeout_ticks = 0ULL;
+            } else {
+                send_timeout_ticks -= (uint64_t)td_ticks;
+            }
+        }
+
         watchdog_feed();
         EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
                 pdFALSE, pdTRUE, WAIT_CONNECT_TIME_TICKS);
@@ -86,12 +107,13 @@ void app_main(void) {
         } else if ((bits & MQTT_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No MQTT connection ...");
             err = ESP_ERR_INVALID_STATE;
-        } else {
+        } else if (send_timeout_ticks == 0) {
             err = sensor_read_temperature(&sensor_handle, &temperature);
             if (err == ESP_OK) {
                 err = mqtt_send_temperature(&mqtt_handle, temperature);
                 if (err == ESP_OK) {
                     ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
+                    send_timeout_ticks = SENSOR_INTERVAL_TICKS;
                 } else {
                     ESP_LOGE(TAG, "MQTT send temperature error: %s (0x%X)",
                             esp_err_to_name(err), err);
@@ -112,9 +134,6 @@ void app_main(void) {
             esp_restart();
         }
 
-        for (int i = 0; i < CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL;
-                ++i) {
-            vTaskDelay(pdMS_TO_TICKS(1000));
-        }
+        vTaskDelay(MAIN_LOOP_DELAY_TICKS);
     }
 }
