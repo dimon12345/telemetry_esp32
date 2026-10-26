@@ -7,6 +7,8 @@
 #include <esp_log.h>
 #include <esp_system.h>
 
+#include <mqtt_client.h>
+
 #include "event_group_bits.h"
 
 #define MQTT_QOS 0
@@ -26,9 +28,20 @@ static void mqtt_event_handler(
 
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_ERROR:
-        if (event->error_handle->error_type ==
-                MQTT_ERROR_TYPE_CONNECTION_REFUSED) {
+        switch (event->error_handle->error_type) {
+        case MQTT_ERROR_TYPE_TCP_TRANSPORT:
+            esp_mqtt_error_codes_t *error = event->error_handle;
+            int socket_error = error->esp_transport_sock_errno;
+            int tls_last_error = error->esp_tls_last_esp_err;
 
+            ESP_LOGE(TAG, "MQTT transport error: %s (0x%X)",
+                    esp_err_to_name(tls_last_error), tls_last_error);
+
+            if (socket_error != 0) {
+                ESP_LOGE(TAG, "Socket error: %d", socket_error);
+            }
+            break;
+        case MQTT_ERROR_TYPE_CONNECTION_REFUSED:
             esp_mqtt_connect_return_code_t return_code =
                     event->error_handle->connect_return_code;
             if (return_code == MQTT_CONNECTION_REFUSE_BAD_USERNAME ||
@@ -39,11 +52,12 @@ static void mqtt_event_handler(
                         return_code);
                 break;
             }
+            ESP_LOGE(TAG, "MQTT event error with type: %d and returncode: %d",
+                    event->error_handle->error_type, return_code);
+            break;
+        default:
+            break;
         }
-
-        ESP_LOGE(TAG, "MQTT event error with type: %d and returncode: %d",
-                event->error_handle->error_type,
-                event->error_handle->connect_return_code);
         break;
 
     case MQTT_EVENT_CONNECTED:
