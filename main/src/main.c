@@ -82,14 +82,6 @@ void app_main(void) {
 
     for (;;) {
         err = ESP_OK;
-        if (send_timeout_ticks > 0ULL) {
-            TickType_t now = xTaskGetTickCount();
-            uint32_t elapsed = now - last_time_ticks;
-            last_time_ticks = now;
-            send_timeout_ticks = (uint64_t)elapsed >= send_timeout_ticks
-                    ? 0ULL
-                    : send_timeout_ticks - (uint64_t)elapsed;
-        }
 
         EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
                 pdFALSE, pdTRUE, WAIT_CONNECT_TIME_TICKS);
@@ -99,7 +91,18 @@ void app_main(void) {
         } else if ((bits & MQTT_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No MQTT connection ...");
             err = ESP_ERR_INVALID_STATE;
-        } else if (send_timeout_ticks == 0) {
+        }
+
+        if (send_timeout_ticks > 0ULL) {
+            TickType_t now = xTaskGetTickCount();
+            uint32_t elapsed = now - last_time_ticks;
+            last_time_ticks = now;
+            send_timeout_ticks = (uint64_t)elapsed >= send_timeout_ticks
+                    ? 0ULL
+                    : send_timeout_ticks - (uint64_t)elapsed;
+        }
+
+        if (err == ESP_OK && send_timeout_ticks == 0) {
             err = sensor_read_temperature(&sensor_handle, &temperature);
             if (err == ESP_OK) {
                 err = mqtt_send_temperature(&mqtt_handle, temperature);
