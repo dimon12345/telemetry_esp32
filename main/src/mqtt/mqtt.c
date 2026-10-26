@@ -60,6 +60,15 @@ static void mqtt_event_handler(
 esp_err_t mqtt_init(mqtt_handle_t *handle) {
     assert(handle != NULL);
 
+    EventBits_t bits =
+            xEventGroupWaitBits(handle->event_group, WIFI_CONNECTED_BIT,
+                    pdFALSE, pdTRUE, handle->restart_on_error_ticks);
+
+    if ((bits & WIFI_CONNECTED_BIT) == 0) {
+        ESP_LOGE(TAG, "Wi-Fi connect timeout. Restart");
+        esp_restart();
+    }
+
     esp_mqtt_client_config_t mqtt_cfg = {
             .broker.address.uri = CONFIG_TELEMETRY_MQTT_BROKER_URI,
             .credentials = {.username = CONFIG_TELEMETRY_MQTT_USERNAME,

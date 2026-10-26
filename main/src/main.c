@@ -9,6 +9,7 @@
 #include <esp_wifi.h>
 #include <nvs_flash.h>
 
+#include "components/watchdog.h"
 #include "event_group_bits.h"
 #include "mqtt/mqtt.h"
 #include "sensor/ds18b20_sensor.h"
@@ -16,9 +17,14 @@
 
 static const char *TAG = "MAIN";
 
+static const uint32_t WAIT_CONNECT_TIME_MS = 60U * 1000U;
+static const TickType_t WAIT_CONNECT_TIME_TICKS = pdMS_TO_TICKS(60U * 1000U);
+static const uint32_t SENSOR_INTERVAL_MS =
+        1000U * CONFIG_TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL;
+static const uint32_t WDT_TIMEOUT_MS =
+        2U * (WAIT_CONNECT_TIME_MS + SENSOR_INTERVAL_MS);
 static const uint32_t RESTART_ON_ERROR_TIME_TICKS =
         pdMS_TO_TICKS(30 * 60 * 1000);
-static const uint32_t WAIT_WIFI_TIME_TICKS = pdMS_TO_TICKS(60 * 1000);
 
 void app_main(void) {
     ESP_LOGI(TAG, "Start");
@@ -54,20 +60,15 @@ void app_main(void) {
     esp_netif_create_default_wifi_sta();
 
     wifi_handle_t wifi_handle = {.event_group = event_group};
-
     ESP_ERROR_CHECK(wifi_init(&wifi_handle));
 
-    EventBits_t bits = xEventGroupWaitBits(event_group, WIFI_CONNECTED_BIT,
-            pdFALSE, pdTRUE, RESTART_ON_ERROR_TIME_TICKS);
-
-    if ((bits & WIFI_CONNECTED_BIT) == 0) {
-        ESP_LOGE(TAG, "Wi-Fi connect timeout. Restart");
-        esp_restart();
-    }
-
     // MQTT
-    mqtt_handle_t mqtt_handle = {.event_group = event_group};
+    mqtt_handle_t mqtt_handle = {.event_group = event_group,
+            .restart_on_error_ticks = RESTART_ON_ERROR_TIME_TICKS};
     ESP_ERROR_CHECK(mqtt_init(&mqtt_handle));
+
+    // Watchdog timer
+    watchdog_init(WDT_TIMEOUT_MS);
 
     ESP_LOGI(TAG, "All ready!");
 
@@ -76,8 +77,9 @@ void app_main(void) {
     err = ESP_OK;
 
     for (;;) {
+        watchdog_feed();
         EventBits_t bits = xEventGroupWaitBits(event_group, CONNECTED_BITS,
-                pdFALSE, pdTRUE, WAIT_WIFI_TIME_TICKS);
+                pdFALSE, pdTRUE, WAIT_CONNECT_TIME_TICKS);
         if ((bits & WIFI_CONNECTED_BIT) == 0) {
             ESP_LOGE(TAG, "No Wi-Fi connection ...");
             err = ESP_ERR_INVALID_STATE;
