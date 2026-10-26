@@ -13,8 +13,7 @@
 static const char *TAG = "SENSOR";
 
 _Static_assert(GPIO_IS_VALID_OUTPUT_GPIO(CONFIG_TELEMETRY_SENSOR_GPIO),
-        ESP_ERR_INAVALID_ARG, TAG, "Invalid sensor GPIO: %d",
-        CONFIG_TELEMETRY_SENSOR_GPIO);
+        "Sensor GPIO must support input/output.");
 
 esp_err_t sensor_init(sensor_handle_t *handle) {
     assert(handle != NULL);
