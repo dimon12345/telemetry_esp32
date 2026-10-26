@@ -34,8 +34,10 @@ static void mqtt_event_handler(
             int socket_error = error->esp_transport_sock_errno;
             int tls_last_error = error->esp_tls_last_esp_err;
 
-            ESP_LOGE(TAG, "MQTT transport error: %s (0x%X)",
-                    esp_err_to_name(tls_last_error), tls_last_error);
+            if (tls_last_error != ESP_OK) {
+                ESP_LOGE(TAG, "MQTT transport error: %s (0x%X)",
+                        esp_err_to_name(tls_last_error), tls_last_error);
+            }
 
             if (socket_error != 0) {
                 ESP_LOGE(TAG, "Socket error: %d", socket_error);
@@ -56,6 +58,8 @@ static void mqtt_event_handler(
                     event->error_handle->error_type, return_code);
             break;
         default:
+            ESP_LOGE(TAG, "MQTT event error with type: %d",
+                    event->error_handle->error_type);
             break;
         }
         break;
