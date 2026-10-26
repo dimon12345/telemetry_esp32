@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/projdefs.h"
 #include "freertos/task.h"
 
 #include <esp_err.h>
@@ -32,6 +33,7 @@ static const uint64_t SENSOR_INTERVAL_TICKS =
         (uint64_t)pdMS_TO_TICKS(1000U);
 static const uint32_t SENSOR_MAX_ERROR_BACKOFF_INTERVAL =
         pdMS_TO_TICKS(60U * 1000U);
+static const uint32_t SENSOR_ERROR_INITIAL_BACKOFF_TICKS = pdMS_TO_TICKS(1000U);
 
 void app_main(void) {
     ESP_LOGI(TAG, "Start");
@@ -78,7 +80,8 @@ void app_main(void) {
 
     uint64_t send_timeout_ticks = 0ULL;
     uint64_t sensor_error_backoff_ticks = 0ULL;
-    uint64_t sensor_error_backoff_interval_ticks = 1ULL;
+    uint64_t sensor_error_backoff_interval_ticks =
+            SENSOR_ERROR_INITIAL_BACKOFF_TICKS;
 
     for (;;) {
         err = ESP_OK;
@@ -123,6 +126,8 @@ void app_main(void) {
                     ESP_LOGI(TAG, "Temperature sent: %.2f", temperature);
                     send_timeout_ticks = SENSOR_INTERVAL_TICKS;
                     last_time_ticks = xTaskGetTickCount();
+                    sensor_error_backoff_ticks =
+                            SENSOR_ERROR_INITIAL_BACKOFF_TICKS;
                 } else {
                     ESP_LOGE(TAG, "MQTT send temperature error: %s (0x%X)",
                             esp_err_to_name(err), err);
