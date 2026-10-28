@@ -37,11 +37,11 @@ void backoff_on_error(backoff_handle_t *handle) {
     if (handle->current_interval_ticks == 0) {
         backoff_start(handle);
     } else {
-        handle->remaining_ticks = handle->current_interval_ticks;
         handle->current_interval_ticks *= 2;
         if (handle->current_interval_ticks > handle->max_interval_ticks) {
             handle->current_interval_ticks = handle->max_interval_ticks;
         }
+        handle->remaining_ticks = handle->current_interval_ticks;
     }
 }
 
