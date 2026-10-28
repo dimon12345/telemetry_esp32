@@ -15,7 +15,6 @@
 typedef struct {
     esp_mqtt_client_handle_t client;
     uint64_t remaining_ticks;
-    uint64_t restart_on_error_ticks;
     backoff_handle_t backoff;
     float temperature;
     bool inited;

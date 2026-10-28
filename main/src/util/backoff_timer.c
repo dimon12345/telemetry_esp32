@@ -4,8 +4,6 @@
 
 #include <esp_log.h>
 
-static const char *TAG = "BACKOFF";
-
 esp_err_t backoff_update(backoff_handle_t *handle, uint64_t elapsed) {
     assert(handle != NULL);
 

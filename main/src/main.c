@@ -28,7 +28,7 @@ static const TickType_t BACKOFF_INITIAL_TICKS = ONE_SECOND_TICKS;
 static const uint64_t RESTART_ON_ERROR_TICKS =
         30U * 60 * (uint64_t)ONE_SECOND_TICKS;
 
-static mqtt_handle_t mqtt_s = {.restart_on_error_ticks = RESTART_ON_ERROR_TICKS,
+static mqtt_handle_t mqtt_s = {
         .backoff.initial_interval_ticks = BACKOFF_INITIAL_TICKS,
         .backoff.max_interval_ticks = BACKOFF_MAX_TICKS};
 
