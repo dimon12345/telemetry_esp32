@@ -18,7 +18,6 @@
 #include "components/wifi.h"
 
 #include "event_group_bits.h"
-#include "util/watchdog.h"
 
 static const char *TAG = "MAIN";
 
@@ -38,8 +37,6 @@ static wifi_handle_t wifi_s;
 static sensor_handle_t sensor_s = {
         .backoff.initial_interval_ticks = BACKOFF_INITIAL_TICKS,
         .backoff.max_interval_ticks = BACKOFF_MAX_TICKS};
-
-static watchdog_handle_t watchdog_s;
 
 EventGroupHandle_t event_group_g;
 
@@ -72,7 +69,15 @@ void app_main(void) {
     uint64_t restart_timeout_ticks = RESTART_ON_ERROR_TICKS;
     TickType_t last_time_ticks = xTaskGetTickCount();
 
+    esp_err_t wdt_err = esp_task_wdt_add(NULL);
+    if (wdt_err != ESP_OK) {
+        ESP_LOGE(TAG, "WDT task add error: %s (0x%X)", esp_err_to_name(wdt_err),
+                wdt_err);
+    }
+
     for (;;) {
+        esp_task_wdt_reset();
+
         TickType_t now = xTaskGetTickCount();
         TickType_t elapsed = now - last_time_ticks;
         last_time_ticks = now;
@@ -90,10 +95,7 @@ void app_main(void) {
             restart_timeout_ticks = RESTART_ON_ERROR_TICKS;
         }
 
-        watchdog_task_add(&watchdog_s);
         sensor_update(&sensor_s, elapsed);
-        watchdog_task_delete(&watchdog_s);
-
         mqtt_update(&mqtt_s, elapsed);
 
         float temperature = 0.f;
