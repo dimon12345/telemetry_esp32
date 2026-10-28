@@ -79,7 +79,7 @@ static void mqtt_event_handler(
         break;
     case MQTT_EVENT_DISCONNECTED:
         xEventGroupClearBits(event_group_g, MQTT_CONNECTED_BIT);
-        handle->error_status = ESP_FAILED;
+        handle->error_status = ESP_FAIL;
         break;
     default:
         break;
@@ -89,11 +89,15 @@ static void mqtt_event_handler(
 static esp_err_t mqtt_init(mqtt_handle_t *handle) {
     assert(handle != NULL);
 
-    if (handle->client) {
-        return ESP_ERR_INVALID_STATE;
-    }
-
     handle->remaining_ticks = 0ULL;
+
+    if (handle->client) {
+        esp_mqtt_client_stop(handle->client);
+        esp_mqtt_client_unregister_event(
+                handle->client, ESP_EVENT_ANY_ID, mqtt_event_handler);
+        esp_mqtt_client_destroy(handle->client);
+        handle->client = NULL;
+    }
 
     esp_mqtt_client_config_t mqtt_cfg = {
             .broker.address.uri = CONFIG_TELEMETRY_MQTT_BROKER_URI,
@@ -105,6 +109,7 @@ static esp_err_t mqtt_init(mqtt_handle_t *handle) {
         ESP_LOGE(TAG, "Can't init MQTT client");
         return ESP_FAIL;
     }
+
     handle->client = client;
 
     ESP_RETURN_ON_ERROR(esp_mqtt_client_register_event(handle->client,
