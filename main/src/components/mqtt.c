@@ -123,8 +123,10 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle) {
     assert(handle != NULL);
 
     EventBits_t bits = xEventGroupGetBits(event_group_g);
+    if ((bits & TEMPERATURE_SEND_PENDING) == 0) {
+        return ESP_ERR_INVALID_STATE;
+    }
     if ((bits & MQTT_CONNECTED_BIT) == 0) {
-
         return ESP_ERR_INVALID_STATE;
     }
 
