@@ -9,14 +9,13 @@
 #include <esp_log.h>
 #include <esp_netif.h>
 #include <esp_system.h>
+#include <esp_task_wdt.h>
 #include <esp_wifi.h>
 #include <nvs_flash.h>
 
 #include "components/ds18b20_sensor.h"
 #include "components/mqtt.h"
 #include "components/wifi.h"
-#include "util/backoff_timer.h"
-#include "util/watchdog.h"
 
 #include "event_group_bits.h"
 
@@ -38,8 +37,6 @@ static wifi_handle_t wifi_s;
 static sensor_handle_t sensor_s = {
         .backoff.initial_interval_ticks = BACKOFF_INITIAL_TICKS,
         .backoff.max_interval_ticks = BACKOFF_MAX_TICKS};
-
-static watchdog_handle_t watchdog_s = {ESP_OK};
 
 EventGroupHandle_t event_group_g;
 
@@ -67,12 +64,20 @@ void app_main(void) {
     esp_netif_create_default_wifi_sta();
     ESP_ERROR_CHECK(wifi_init(&wifi_s));
 
+    err = esp_task_wdt_add(NULL);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "WDT task add error: %s (0x%X)", esp_err_to_name(err),
+                err);
+    }
+
     ESP_LOGI(TAG, "All ready!");
 
     uint64_t restart_timeout_ticks = RESTART_ON_ERROR_TICKS;
     TickType_t last_time_ticks = xTaskGetTickCount();
 
     for (;;) {
+        esp_task_wdt_reset();
+
         TickType_t now = xTaskGetTickCount();
         TickType_t elapsed = now - last_time_ticks;
         last_time_ticks = now;
@@ -89,8 +94,6 @@ void app_main(void) {
             xEventGroupSetBits(event_group_g, RESTART_TIMEOUT_BIT);
             restart_timeout_ticks = RESTART_ON_ERROR_TICKS;
         }
-
-        watchdog_task_add(&watchdog_s);
 
         sensor_update(&sensor_s, elapsed);
         mqtt_update(&mqtt_s, elapsed);
@@ -110,7 +113,6 @@ void app_main(void) {
             xEventGroupClearBits(event_group_g, RESTART_TIMEOUT_BIT);
         }
 
-        watchdog_task_del(&watchdog_s);
         vTaskDelay(MAIN_LOOP_DELAY_TICKS);
     }
 }
