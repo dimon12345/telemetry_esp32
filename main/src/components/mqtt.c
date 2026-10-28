@@ -216,5 +216,9 @@ esp_err_t mqtt_check_status(mqtt_handle_t *handle) {
         return ESP_FAIL;
     }
 
+    if ((bits & WIFI_CONNECTED_BIT) == 0) {
+        return ESP_FAIL;
+    }
+
     return atomic_load_explicit(&handle->error_status, memory_order_relaxed);
 }
