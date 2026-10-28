@@ -28,6 +28,7 @@ _Static_assert(
 static void mqtt_event_handler(
         void *arg, esp_event_base_t base, int32_t event_id, void *event_data) {
     esp_mqtt_event_handle_t event = event_data;
+    mqtt_handle_t *handle = (mqtt_handle_t *)arg;
 
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_ERROR:
@@ -78,6 +79,7 @@ static void mqtt_event_handler(
         break;
     case MQTT_EVENT_DISCONNECTED:
         xEventGroupClearBits(event_group_g, MQTT_CONNECTED_BIT);
+        handle->error_status = ESP_FAILED;
         break;
     default:
         break;
