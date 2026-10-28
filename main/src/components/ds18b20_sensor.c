@@ -35,6 +35,7 @@ static esp_err_t sensor_init(sensor_handle_t *handle) {
     if (handle->bus) {
         ESP_LOGE(TAG, "Reset 1-Wire bus");
         esp_err_t err = handle->bus->del(handle->bus);
+        handle->bus = NULL;
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Delete 1-Wire bus error: %s (0x%X)",
                     esp_err_to_name(err), err);
