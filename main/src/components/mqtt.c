@@ -211,5 +211,10 @@ void mqtt_temperature_for_send(mqtt_handle_t *handle, float temperature) {
 
 esp_err_t mqtt_check_status(mqtt_handle_t *handle) {
     assert(handle != NULL);
+    EventBits_t bits = xEventGroupGetBits(event_group_g);
+    if ((bits & MQTT_CONNECTED_BIT) == 0) {
+        return ESP_FAIL;
+    }
+
     return atomic_load_explicit(&handle->error_status, memory_order_relaxed);
 }
