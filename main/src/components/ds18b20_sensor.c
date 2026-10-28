@@ -114,6 +114,7 @@ void sensor_update(sensor_handle_t *handle, TickType_t elapsed) {
 
     err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
     if (err != ESP_OK) {
+        handle->sensor_ready = false;
         backoff_on_error(&handle->backoff);
         ESP_LOGE(TAG, "Sensor conversion error: %s (0x%X)",
                 esp_err_to_name(err), err);
@@ -122,6 +123,7 @@ void sensor_update(sensor_handle_t *handle, TickType_t elapsed) {
 
     err = ds18b20_get_temperature(handle->device, &handle->temperature);
     if (err != ESP_OK) {
+        handle->sensor_ready = false;
         backoff_on_error(&handle->backoff);
         ESP_LOGE(TAG, "Sensor get temperature error: %s (0x%X)",
                 esp_err_to_name(err), err);
