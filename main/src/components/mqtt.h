@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdatomic.h>
 #include <stdbool.h>
 
 #include <freertos/FreeRTOS.h>
@@ -18,7 +19,7 @@ typedef struct {
     backoff_handle_t backoff;
     float temperature;
     bool inited;
-    esp_err_t error_status;
+    _Atomic esp_err_t error_status;
 } mqtt_handle_t;
 
 void mqtt_update(mqtt_handle_t *handle, TickType_t elapsed);

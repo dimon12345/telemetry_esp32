@@ -1,6 +1,7 @@
 #include "mqtt.h"
 
 #include <assert.h>
+#include <stdatomic.h>
 #include <stdio.h>
 
 #include "esp_err.h"
@@ -79,7 +80,8 @@ static void mqtt_event_handler(
         break;
     case MQTT_EVENT_DISCONNECTED:
         xEventGroupClearBits(event_group_g, MQTT_CONNECTED_BIT);
-        handle->error_status = ESP_FAIL;
+        atomic_store_explicit(
+                &handle->error_status, ESP_FAIL, memory_order_relaxed);
         break;
     default:
         break;
@@ -188,12 +190,14 @@ void mqtt_update(mqtt_handle_t *handle, TickType_t elapsed) {
 
     if (mqtt_send_temperature(handle) == ESP_OK) {
         backoff_on_success(&handle->backoff);
-        handle->error_status = ESP_OK;
+        atomic_store_explicit(
+                &handle->error_status, ESP_OK, memory_order_relaxed);
         handle->remaining_ticks = MESSAGE_INTERVAL_TICKS;
         xEventGroupClearBits(event_group_g, TEMPERATURE_SEND_PENDING);
     } else {
         backoff_on_error(&handle->backoff);
-        handle->error_status = ESP_FAIL;
+        atomic_store_explicit(
+                &handle->error_status, ESP_FAIL, memory_order_relaxed);
         handle->remaining_ticks = 0;
     }
 }
@@ -207,5 +211,5 @@ void mqtt_temperature_for_send(mqtt_handle_t *handle, float temperature) {
 
 esp_err_t mqtt_check_status(mqtt_handle_t *handle) {
     assert(handle != NULL);
-    return handle->error_status;
+    return atomic_load_explicit(&handle->error_status, memory_order_relaxed);
 }
