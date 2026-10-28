@@ -114,17 +114,18 @@ static esp_err_t mqtt_init(mqtt_handle_t *handle) {
 static esp_err_t mqtt_send_temperature(mqtt_handle_t *handle) {
     assert(handle != NULL);
 
-    EventBits_t bits = xEventGroupGetBits(event_group_g);
-    if ((bits & WIFI_CONNECTED_BIT) == 0) {
-        return ESP_ERR_INVALID_STATE;
-    }
-
     if (!handle->inited) {
+        EventBits_t bits = xEventGroupGetBits(event_group_g);
+        if ((bits & WIFI_CONNECTED_BIT) == 0) {
+            return ESP_ERR_INVALID_STATE;
+        }
+
         esp_err_t err = mqtt_init(handle);
         if (err != ESP_OK) {
             return err;
         }
         handle->inited = true;
+        return ESP_ERR_INVALID_STATE;
     }
 
     EventBits_t bits = xEventGroupGetBits(event_group_g);
