@@ -20,6 +20,5 @@ typedef struct {
     backoff_handle_t backoff;
 } sensor_handle_t;
 
-esp_err_t sensor_init(sensor_handle_t *handle);
 void sensor_update(sensor_handle_t *handle, TickType_t elapsed);
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature);

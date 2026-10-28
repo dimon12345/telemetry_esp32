@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
@@ -15,8 +17,8 @@ typedef struct {
     uint64_t restart_on_error_ticks;
     backoff_handle_t backoff;
     float temperature;
+    bool inited;
 } mqtt_handle_t;
 
-esp_err_t mqtt_init(mqtt_handle_t *handle);
 void mqtt_update(mqtt_handle_t *handle, TickType_t elapsed);
 void mqtt_temperature_for_send(mqtt_handle_t *handle, float temperature);

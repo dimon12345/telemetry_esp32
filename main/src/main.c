@@ -66,15 +66,29 @@ void app_main(void) {
 
     esp_netif_create_default_wifi_sta();
     ESP_ERROR_CHECK(wifi_init(&wifi_s));
-    ESP_ERROR_CHECK(mqtt_init(&mqtt_s));
 
     ESP_LOGI(TAG, "All ready!");
 
+    uint64_t restart_timeout_ticks = RESTART_ON_ERROR_TICKS;
     TickType_t last_time_ticks = xTaskGetTickCount();
+
     for (;;) {
         TickType_t now = xTaskGetTickCount();
         TickType_t elapsed = now - last_time_ticks;
         last_time_ticks = now;
+
+        EventBits_t bits = xEventGroupGetBits(event_group_g);
+        if (bits & RESTART_TIMEOUT_BIT) {
+            if (elapsed > restart_timeout_ticks) {
+                ESP_LOGE(TAG, "Can't recover from errors. Restart ...");
+                esp_restart();
+            } else {
+                restart_timeout_ticks -= (uint64_t)elapsed;
+            }
+        } else {
+            xEventGroupSetBits(event_group_g, RESTART_TIMEOUT_BIT);
+            restart_timeout_ticks = RESTART_ON_ERROR_TICKS;
+        }
 
         watchdog_task_add(&watchdog_s);
 
@@ -90,7 +104,6 @@ void app_main(void) {
             ESP_LOGE(TAG, "Read temperature error: %s (0x%X)",
                     esp_err_to_name(err), err);
         }
-
         watchdog_task_del(&watchdog_s);
         vTaskDelay(MAIN_LOOP_DELAY_TICKS);
     }

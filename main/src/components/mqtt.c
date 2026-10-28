@@ -84,18 +84,10 @@ static void mqtt_event_handler(
     }
 }
 
-esp_err_t mqtt_init(mqtt_handle_t *handle) {
+static esp_err_t mqtt_init(mqtt_handle_t *handle) {
     assert(handle != NULL);
 
     handle->remaining_ticks = 0ULL;
-
-    EventBits_t bits = xEventGroupWaitBits(event_group_g, WIFI_CONNECTED_BIT,
-            pdFALSE, pdTRUE, handle->restart_on_error_ticks);
-
-    if ((bits & WIFI_CONNECTED_BIT) == 0) {
-        ESP_LOGE(TAG, "Wi-Fi connect timeout. Restart");
-        esp_restart();
-    }
 
     esp_mqtt_client_config_t mqtt_cfg = {
             .broker.address.uri = CONFIG_TELEMETRY_MQTT_BROKER_URI,
@@ -119,13 +111,23 @@ esp_err_t mqtt_init(mqtt_handle_t *handle) {
     return ESP_OK;
 }
 
-esp_err_t mqtt_send_temperature(mqtt_handle_t *handle) {
+static esp_err_t mqtt_send_temperature(mqtt_handle_t *handle) {
     assert(handle != NULL);
 
     EventBits_t bits = xEventGroupGetBits(event_group_g);
-    if ((bits & TEMPERATURE_SEND_PENDING) == 0) {
+    if ((bits & WIFI_CONNECTED_BIT) == 0) {
         return ESP_ERR_INVALID_STATE;
     }
+
+    if (!handle->inited) {
+        esp_err_t err = mqtt_init(handle);
+        if (err != ESP_OK) {
+            return err;
+        }
+        handle->inited = true;
+    }
+
+    EventBits_t bits = xEventGroupGetBits(event_group_g);
     if ((bits & MQTT_CONNECTED_BIT) == 0) {
         return ESP_ERR_INVALID_STATE;
     }
@@ -142,11 +144,9 @@ esp_err_t mqtt_send_temperature(mqtt_handle_t *handle) {
     if (msg_id < 0) {
         return ESP_FAIL;
     }
-    ESP_LOGI(TAG, "Sent temperature: %0.3f", handle->temperature);
 
-    xEventGroupClearBits(event_group_g, TEMPERATURE_SEND_PENDING);
-    handle->remaining_ticks = MESSAGE_INTERVAL_TICKS;
-    backoff_on_success(&handle->backoff);
+    ESP_LOGI(TAG, "Sent MQTT message %s", payload);
+
     return ESP_OK;
 }
 
@@ -164,25 +164,30 @@ void mqtt_update(mqtt_handle_t *handle, TickType_t elapsed) {
         return;
     }
 
-    if ((uint64_t)elapsed > handle->remaining_ticks) {
-        esp_err_t err = mqtt_send_temperature(handle);
-        if (err == ESP_OK) {
-            backoff_on_success(&handle->backoff);
-            handle->remaining_ticks = MESSAGE_INTERVAL_TICKS;
-        } else {
-            backoff_on_error(&handle->backoff);
-            handle->remaining_ticks = 0;
-        }
-    } else {
+    if ((uint64_t)elapsed < handle->remaining_ticks) {
         handle->remaining_ticks -= elapsed;
+        return;
     }
 
-    if (err != ESP_OK) {
+    EventBits_t bits = xEventGroupGetBits(event_group_g);
+    if ((bits & TEMPERATURE_SEND_PENDING) == 0) {
         return;
+    }
+
+    if (mqtt_send_temperature(handle) == ESP_OK) {
+        backoff_on_success(&handle->backoff);
+        handle->remaining_ticks = MESSAGE_INTERVAL_TICKS;
+        xEventGroupClearBits(
+                event_group_g, TEMPERATURE_SEND_PENDING | RESTART_TIMEOUT_BIT);
+    } else {
+        backoff_on_error(&handle->backoff);
+        handle->remaining_ticks = 0;
     }
 }
 
 void mqtt_temperature_for_send(mqtt_handle_t *handle, float temperature) {
+    assert(handle != NULL);
+
     handle->temperature = temperature;
     xEventGroupSetBits(event_group_g, TEMPERATURE_SEND_PENDING);
 }
