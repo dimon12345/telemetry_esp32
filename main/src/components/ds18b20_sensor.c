@@ -8,6 +8,7 @@
 #include <sdkconfig.h>
 
 #include <driver/gpio.h>
+#include <onewire_bus_interface.h>
 
 #include "event_group_bits.h"
 
@@ -31,13 +32,20 @@ static esp_err_t sensor_init(sensor_handle_t *handle) {
     ds18b20_config_t ds_cfg = {};
     onewire_device_t next_onewire_device;
 
-    if (!handle->bus) {
-        ESP_LOGI(TAG, "Creating 1-Wire bus on GPIO %d",
-                CONFIG_TELEMETRY_SENSOR_GPIO);
-        ESP_RETURN_ON_ERROR(
-                onewire_new_bus_rmt(&bus_config, &rmt_config, &handle->bus),
-                TAG, "New bus RMT error");
+    if (handle->bus) {
+        ESP_LOGE(TAG, "Reset 1-Wire bus");
+        esp_err_t err = handle->bus->del(handle->bus);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Delete 1-Wire bus error: %s (0x%X)",
+                    esp_err_to_name(err), err);
+        }
     }
+
+    ESP_LOGI(TAG, "Creating 1-Wire bus on GPIO %d",
+            CONFIG_TELEMETRY_SENSOR_GPIO);
+    ESP_RETURN_ON_ERROR(
+            onewire_new_bus_rmt(&bus_config, &rmt_config, &handle->bus), TAG,
+            "New bus RMT error");
 
     ESP_GOTO_ON_ERROR(onewire_new_device_iter(handle->bus, &iter), cleanup, TAG,
             "New device iterator error");
