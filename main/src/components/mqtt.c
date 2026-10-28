@@ -12,9 +12,12 @@
 #include <mqtt_client.h>
 
 #include "event_group_bits.h"
+#include "sdkconfig.h"
 #include "util/backoff_timer.h"
 
 #define MQTT_QOS 0
+#define MQTT_RETAIN 0
+#define MQTT_EQUEUE_STORE 1
 static const char *TAG = "MQTT";
 
 static const uint64_t MESSAGE_INTERVAL_TICKS =
@@ -153,8 +156,9 @@ static esp_err_t mqtt_send_temperature(mqtt_handle_t *handle) {
         return ESP_FAIL;
     }
 
-    int msg_id = esp_mqtt_client_publish(handle->client,
-            CONFIG_TELEMETRY_MQTT_TOPIC, payload, 0, MQTT_QOS, 0);
+    int msg_id =
+            esp_mqtt_client_enqueue(handle->client, CONFIG_TELEMETRY_MQTT_TOPIC,
+                    payload, 0, MQTT_QOS, MQTT_RETAIN, MQTT_EQUEUE_STORE);
     if (msg_id < 0) {
         return ESP_FAIL;
     }
