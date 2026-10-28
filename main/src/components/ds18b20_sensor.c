@@ -1,12 +1,15 @@
 #include "ds18b20_sensor.h"
 
 #include <assert.h>
+#include <stdint.h>
 
 #include <esp_check.h>
 #include <esp_task_wdt.h>
 #include <sdkconfig.h>
 
 #include <driver/gpio.h>
+
+#include "event_group_bits.h"
 
 // 1 byte ROM command + 8 byte ROM number + 1 byte device command
 #define DS18B20_MAX_RX_BYTES 10
@@ -69,42 +72,62 @@ cleanup:
 esp_err_t sensor_read_temperature(sensor_handle_t *handle, float *temperature) {
     assert(handle != NULL);
     assert(temperature != NULL);
-    esp_err_t err = ESP_OK;
 
-    esp_err_t wdt_err = esp_task_wdt_add(NULL);
-    if (wdt_err != ESP_OK) {
-        ESP_LOGE(TAG, "WDT task add error: %s (0x%X)", esp_err_to_name(wdt_err),
-                wdt_err);
+    EventBits_t bits = xEventGroupGetBits(event_group_g);
+    if ((bits & TEMPERATURE_READY_BIT) == 0) {
+        return ESP_ERR_INVALID_STATE;
     }
+    xEventGroupClearBits(event_group_g, TEMPERATURE_READY_BIT);
 
-    if (!handle->sensor_ready) {
-        esp_err_t sensor_err = sensor_init(handle);
-        if (sensor_err != ESP_OK) {
-            ESP_LOGE(TAG, "Sensor init error: %s (0x%X)",
-                    esp_err_to_name(sensor_err), sensor_err);
+    *temperature = handle->temperature;
+    return ESP_OK;
+}
 
-            err = sensor_err;
-            goto cleanup;
-        }
-    }
+void sensor_update(sensor_handle_t *handle, TickType_t elapsed) {
+    assert(handle != NULL);
 
-    err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
-    if (err == ESP_OK) {
-        err = ds18b20_get_temperature(handle->device, temperature);
+    xEventGroupClearBits(event_group_g, TEMPERATURE_READY_BIT);
+
+    esp_err_t err = backoff_update(&handle->backoff, (uint64_t)elapsed);
+    if (err == ESP_ERR_INVALID_STATE) {
+        return;
     }
 
     if (err != ESP_OK) {
-        handle->sensor_ready = false;
+        ESP_LOGE(TAG, "Sensor backoff error: %s (0x%X)", esp_err_to_name(err),
+                err);
+        return;
     }
 
-cleanup:
-    if (wdt_err == ESP_OK) {
-        wdt_err = esp_task_wdt_delete(NULL);
-        if (wdt_err != ESP_OK) {
-            ESP_LOGE(TAG, "WDT task delete error: %s (0x%X)",
-                    esp_err_to_name(wdt_err), wdt_err);
+    if (!handle->sensor_ready) {
+        err = sensor_init(handle);
+        if (err != ESP_OK) {
+            backoff_on_error(&handle->backoff);
+
+            ESP_LOGE(TAG, "Sensor init error: %s (0x%X)", esp_err_to_name(err),
+                    err);
+            return;
         }
     }
 
-    return err;
+    handle->sensor_ready = true;
+
+    err = ds18b20_trigger_temperature_conversion_for_all(handle->bus);
+    if (err != ESP_OK) {
+        backoff_on_error(&handle->backoff);
+        ESP_LOGE(TAG, "Sensor conversion error: %s (0x%X)",
+                esp_err_to_name(err), err);
+        return;
+    }
+
+    err = ds18b20_get_temperature(handle->device, &handle->temperature);
+    if (err != ESP_OK) {
+        backoff_on_error(&handle->backoff);
+        ESP_LOGE(TAG, "Sensor get temperature error: %s (0x%X)",
+                esp_err_to_name(err), err);
+        return;
+    }
+
+    backoff_on_success(&handle->backoff);
+    xEventGroupSetBits(event_group_g, TEMPERATURE_READY_BIT);
 }

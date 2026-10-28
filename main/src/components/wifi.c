@@ -73,7 +73,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         break;
 
     case WIFI_EVENT_STA_DISCONNECTED:
-        xEventGroupClearBits(handle->event_group, WIFI_CONNECTED_BIT);
+        xEventGroupClearBits(event_group_g, WIFI_CONNECTED_BIT);
         wifi_event_sta_disconnected_t *event =
                 (wifi_event_sta_disconnected_t *)event_data;
         switch (event->reason) {
@@ -101,7 +101,7 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
     assert(arg != NULL);
 
     wifi_handle_t *handle = (wifi_handle_t *)arg;
-    xEventGroupSetBits(handle->event_group, WIFI_CONNECTED_BIT);
+    xEventGroupSetBits(event_group_g, WIFI_CONNECTED_BIT);
     atomic_store_explicit(
             &handle->retry_delay, WIFI_MIN_RETRY_DELAY_S, memory_order_relaxed);
 }
