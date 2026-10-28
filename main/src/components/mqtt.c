@@ -113,7 +113,7 @@ static esp_err_t mqtt_init(mqtt_handle_t *handle) {
     handle->client = client;
 
     ESP_RETURN_ON_ERROR(esp_mqtt_client_register_event(handle->client,
-                                ESP_EVENT_ANY_ID, mqtt_event_handler, NULL),
+                                ESP_EVENT_ANY_ID, mqtt_event_handler, handle),
             TAG, "MQTT client register event error");
 
     ESP_RETURN_ON_ERROR(esp_mqtt_client_start(handle->client), TAG,
