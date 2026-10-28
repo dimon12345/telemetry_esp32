@@ -87,6 +87,10 @@ static void mqtt_event_handler(
 static esp_err_t mqtt_init(mqtt_handle_t *handle) {
     assert(handle != NULL);
 
+    if (handle->client) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
     handle->remaining_ticks = 0ULL;
 
     esp_mqtt_client_config_t mqtt_cfg = {
@@ -177,11 +181,12 @@ void mqtt_update(mqtt_handle_t *handle, TickType_t elapsed) {
 
     if (mqtt_send_temperature(handle) == ESP_OK) {
         backoff_on_success(&handle->backoff);
+        handle->error_status = ESP_OK;
         handle->remaining_ticks = MESSAGE_INTERVAL_TICKS;
-        xEventGroupClearBits(
-                event_group_g, TEMPERATURE_SEND_PENDING | RESTART_TIMEOUT_BIT);
+        xEventGroupClearBits(event_group_g, TEMPERATURE_SEND_PENDING);
     } else {
         backoff_on_error(&handle->backoff);
+        handle->error_status = ESP_FAIL;
         handle->remaining_ticks = 0;
     }
 }
@@ -191,4 +196,9 @@ void mqtt_temperature_for_send(mqtt_handle_t *handle, float temperature) {
 
     handle->temperature = temperature;
     xEventGroupSetBits(event_group_g, TEMPERATURE_SEND_PENDING);
+}
+
+esp_err_t mqtt_check_status(mqtt_handle_t *handle) {
+    assert(handle != NULL);
+    return handle->error_status;
 }

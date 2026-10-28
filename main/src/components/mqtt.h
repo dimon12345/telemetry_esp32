@@ -18,7 +18,9 @@ typedef struct {
     backoff_handle_t backoff;
     float temperature;
     bool inited;
+    esp_err_t error_status;
 } mqtt_handle_t;
 
 void mqtt_update(mqtt_handle_t *handle, TickType_t elapsed);
 void mqtt_temperature_for_send(mqtt_handle_t *handle, float temperature);
+esp_err_t mqtt_check_status(mqtt_handle_t *handle);

@@ -112,7 +112,7 @@ void sensor_update(sensor_handle_t *handle, TickType_t elapsed) {
         err = sensor_init(handle);
         if (err != ESP_OK) {
             backoff_on_error(&handle->backoff);
-
+            handle->error_status = ESP_FAIL;
             ESP_LOGE(TAG, "Sensor init error: %s (0x%X)", esp_err_to_name(err),
                     err);
             return;
@@ -125,6 +125,7 @@ void sensor_update(sensor_handle_t *handle, TickType_t elapsed) {
     if (err != ESP_OK) {
         handle->sensor_ready = false;
         backoff_on_error(&handle->backoff);
+        handle->error_status = ESP_FAIL;
         ESP_LOGE(TAG, "Sensor conversion error: %s (0x%X)",
                 esp_err_to_name(err), err);
         return;
@@ -134,11 +135,18 @@ void sensor_update(sensor_handle_t *handle, TickType_t elapsed) {
     if (err != ESP_OK) {
         handle->sensor_ready = false;
         backoff_on_error(&handle->backoff);
+        handle->error_status = ESP_FAIL;
         ESP_LOGE(TAG, "Sensor get temperature error: %s (0x%X)",
                 esp_err_to_name(err), err);
         return;
     }
 
     backoff_on_success(&handle->backoff);
+    handle->error_status = ESP_OK;
     xEventGroupSetBits(event_group_g, TEMPERATURE_READY_BIT);
+}
+
+esp_err_t sensor_check_status(sensor_handle_t *handle) {
+    assert(handle != NULL);
+    return handle->error_status;
 }

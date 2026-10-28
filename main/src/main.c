@@ -104,6 +104,12 @@ void app_main(void) {
             ESP_LOGE(TAG, "Read temperature error: %s (0x%X)",
                     esp_err_to_name(err), err);
         }
+
+        if (mqtt_check_status(&mqtt_s) == ESP_OK &&
+                sensor_check_status(&sensor_s) == ESP_OK) {
+            xEventGroupClearBits(event_group_g, RESTART_TIMEOUT_BIT);
+        }
+
         watchdog_task_del(&watchdog_s);
         vTaskDelay(MAIN_LOOP_DELAY_TICKS);
     }
