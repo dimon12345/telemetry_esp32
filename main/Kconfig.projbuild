@@ -1,0 +1,51 @@
+menu "Telemetry"
+    config TELEMETRY_SENSOR_GPIO
+        int "Sensor GPIO pin. Must support input/output."
+        default 22
+        range 0 33
+        help
+            Sensor GPIO pin. Must support input/output.
+
+    config TELEMETRY_SENSOR_MESSAGE_TIME_INTERVAL
+        int "Send sensor message time interval (seconds)"
+        default 60
+        range 1 86400
+        help
+            Time interval for sending sensor messages (seconds)
+
+    menu "Wi-Fi Settings"
+        config TELEMETRY_WIFI_SSID
+            string "Wi-Fi SSID"
+            help
+                SSID (network name) for the Telemetry to connect to.
+
+        config TELEMETRY_WIFI_PASSWORD
+            string "Wi-Fi Password"
+            help
+                WiFi password (WPA or WPA2) for the Telemetry to use.
+    endmenu
+
+    menu "MQTT Settings"
+        config TELEMETRY_MQTT_BROKER_URI
+            string "MQTT broker URI"
+            default "mqtt://mqtt_broker:1883"
+            help
+                MQTT broker URI
+
+        config TELEMETRY_MQTT_USERNAME
+            string "MQTT username"
+            help
+                MQTT username
+
+        config TELEMETRY_MQTT_PASSWORD
+            string "MQTT Password"
+            help
+                MQTT password
+
+        config TELEMETRY_MQTT_TOPIC
+            string "MQTT Topic"
+            default "house/esp32/state"
+            help
+                MQTT topic with format house/sensor_name/state
+    endmenu
+endmenu
